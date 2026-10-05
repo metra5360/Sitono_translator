@@ -121,6 +121,12 @@ li span{overflow-wrap:anywhere}
         <option value="n">середній</option>
       </select>
     </div>
+    <div id="stemBox" hidden>
+      <label for="oblInput">Основа непрямих відмінків (якщо корінь змінюється)</label>
+      <input type="text" id="oblInput" placeholder="напр., для «рік»: рок" autocomplete="off">
+      <label for="pluInput">Основа множини (якщо відрізняється)</label>
+      <input type="text" id="pluInput" placeholder="напр., для «людина»: люд" autocomplete="off">
+    </div>
     <div id="nomBox" hidden>
       <label for="nomInput">Закінчення називного відмінка цього слова (необов'язково)</label>
       <input type="text" id="nomInput" placeholder="напр., u у слові Wamu: основа буде Wam" autocomplete="off">
@@ -221,7 +227,7 @@ var FIREBASE_CONFIG = {
  
   function kindOf(w){ return w.kind || (w.verb ? "verb" : ""); }
   function putWord(w){
-    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", pres: w.pres || "", past: w.past || "", t: w.t || Date.now()};
+    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", pres: w.pres || "", past: w.past || "", t: w.t || Date.now()};
     if(wordsCol){ wordsCol.doc(w.id).set(data).catch(onErr); return; }
     data.id = w.id;
     var i = words.map(function(x){ return x.id; }).indexOf(w.id);
@@ -236,9 +242,9 @@ var FIREBASE_CONFIG = {
   function persistEndings(){
     if(endDoc) endDoc.set({e: endings}).catch(onErr); else saveEnd();
   }
-  function norm(s){
-    return s.toLowerCase().replace(/[’ʼ`]/g,"'").replace(/\s+/g," ").trim();
-  }
+  // disp: for showing; norm: for comparing (apostrophes ignored: любов'ю = любовю)
+  function disp(s){ return s.toLowerCase().replace(/[’ʼ`]/g, "'").replace(/\s+/g, " ").trim(); }
+  function norm(s){ return disp(s).replace(/'/g, ""); }
   /* Ukrainian case endings (longest first) for matching other forms of a word */
   var ENDINGS = ["ьому","ього","ами","ями","ові","еві","єві","ого","ому","ими","іми","ість","ою","ею","єю","ій","ий","ів","їв","ам","ям","ах","ях","ом","ем","єм","ої","их","ім","ою","ти","ть","ла","ло","ли","ає","яє","ує","ють","уть","ить","ать","ять","а","я","у","ю","і","ї","е","є","и","о","ь"]
     .sort(function(a,b){ return b.length - a.length; });
@@ -302,7 +308,7 @@ var FIREBASE_CONFIG = {
   var CLASSES = [["all","Спільні закінчення для іменників, прикметників і займенників"]];
   var UK_END = {
     noun: {gs:["а","я","у","ю","и","і","ї"], ds:["у","ю","ові","еві","єві","і","ї"], as:["а","я","у","ю"],
-           is:["ом","ем","єм","ою","ею","єю"], ls:["і","у","ю","ові","еві","ї"], vs:["е","є","у","ю","о"],
+           is:["ом","ем","єм","ою","ею","єю","ю"], ls:["і","у","ю","ові","еві","ї"], vs:["е","є","у","ю","о"],
            np:["и","і","ї","а","я"], gp:["ів","їв","ей",""], dp:["ам","ям"], ap:["ів","їв","ей","и","і","ї","а","я"],
            ip:["ами","ями"], lp:["ах","ях"], vp:["и","і","ї","а","я"]},
     adj:  {ns:["ий","ій","а","я","е","є"], gs:["ого","ього","ої","ьої"], ds:["ому","ьому","ій","ї"],
@@ -314,6 +320,8 @@ var FIREBASE_CONFIG = {
     var r = [];
     if(kind === "adj"){ var m = /^(.{2,}?)(ий|ій)$/.exec(n); if(!m) return r; r = [m[1]]; }
     else { r = [n]; var v = n.replace(/[аеєиіїоуюяь]$/, ""); if(v.length >= 2 && v !== n) r.push(v); }
+    if(kind !== "adj" && /ець$/.test(n)) r.push(n.slice(0, -3) + "ц");
+    if(kind !== "adj") r.slice().forEach(function(s){ if(/[чжшщлн]$/.test(s)) r.push(s + s.slice(-1)); });
     var extra = [];
     r.forEach(function(s){ var j = s.lastIndexOf("і"); if(j > -1 && s.length - j <= 3) extra.push(s.slice(0,j) + "о" + s.slice(j+1)); });
     return r.concat(extra);
@@ -328,6 +336,11 @@ var FIREBASE_CONFIG = {
       if(n.indexOf(" ") > -1) return;
       var stems = ukStems(n, kind);
       if(!stems.length) return;
+      if(kind === "noun"){
+        var ni = nounInfo(w);
+        [ni.obl, ni.plu].forEach(function(x){ x = norm(x || ""); if(x && stems.indexOf(x) < 0) stems.push(x); });
+        if(ni.f) Object.keys(ni.f).forEach(function(kk){ var e = dend(kind, kk); if(e !== null) addExact(norm(ni.f[kk]), stemSi + e, kk); });
+      }
       // singular cases first, so an ambiguous form (зими) is read as singular
       CKEYS.filter(function(c){ return c.k[1] === "s"; }).concat(CKEYS.filter(function(c){ return c.k[1] === "p"; })).forEach(function(ck){
         var e = dend(kind, ck.k);
@@ -385,7 +398,7 @@ var FIREBASE_CONFIG = {
   /* ---------- context: singular / plural / case ---------- */
   var TOK = /[\p{L}\p{N}'’ʼ-]+|[^\p{L}\p{N}'’ʼ-]+/gu;
   function isW(p){ return /[\p{L}\p{N}]/u.test(p); }
-  function setOf(str){ var o = Object.create(null); str.split(" ").forEach(function(w){ o[w] = 1; }); return o; }
+  function setOf(str){ var o = Object.create(null); str.split(" ").forEach(function(w){ o[w.replace(/'/g, "")] = 1; }); return o; }
   var PL = setOf("ці ті усі всі мої твої наші ваші їхні деякі інші самі такі різні обидва обидві які два дві три чотири");
   var SG = setOf("цей ця той мій моя моє твій твоя твоє наш наша наше ваш ваша ваше один одна одне кожен кожна кожне весь вся жоден жодна жодне");
   var QU = setOf("кілька декілька багато чимало небагато мало скільки п'ять шість сім вісім дев'ять десять");
@@ -427,8 +440,8 @@ var FIREBASE_CONFIG = {
     function addC(l, w, why){ cu.c[l] = (cu.c[l] || 0) + w; if(why) cu.why.push(why); }
     // a preposition or «немає» in front of the word (adjectives and determiners may stand between)
     var q = p - 1, steps = 0;
-    while(same(W[q]) && !CC[W[q].t] && modLike(W[q]) && steps < 5){ q--; steps++; }
-    var gov = same(W[q]) ? W[q] : null;
+    while(same(W[q]) && !W[q + 1].brk && !CC[W[q].t] && modLike(W[q]) && steps < 5){ q--; steps++; }
+    var gov = same(W[q]) && !W[q + 1].brk ? W[q] : null;
     if(gov && CC[gov.t]){
       CC[gov.t].forEach(function(x){ addC(x[0], x[1], "слово «" + gov.t + "» вимагає " + CN[x[0]] + " відмінка"); });
       return;
@@ -579,6 +592,7 @@ var FIREBASE_CONFIG = {
         });
       } else if(k === "noun" || k === "adj"){
         var stemS = siStem(w.si, w.nom), stems = ukStems(lem, k);
+        if(k === "noun"){ var ni2 = nounInfo(w); [ni2.obl, ni2.plu].forEach(function(x){ x = norm(x || ""); if(x && stems.indexOf(x) < 0) stems.push(x); }); }
         CKEYS.forEach(function(ck){
           var e = dend(k, ck.k);
           if(e === null) return;
@@ -599,8 +613,84 @@ var FIREBASE_CONFIG = {
   /* ---------- simple Ukrainian inflection (used for sitono -> ukrainian) ---------- */
   var HUSH = "жчшщ", ALT_D = {"г":"з","к":"ц","х":"с"}, ALT_V = {"г":"ж","к":"ч","х":"ш"};
   function lastCh(s){ return s.slice(-1); }
+  /* Nouns that do not follow the regular pattern. Fields: obl = root in oblique cases, plu = root in plural,
+     g = gender (f/m/n), u = genitive and dative in -у (снігу), an = animate (accusative = genitive),
+     f = ready forms for particular cases (np = nominative plural, gp = genitive plural, ls = locative singular ...).
+     Whatever is typed in the word's own fields wins over this list. */
+  var NOUN_DB = (function(src){
+    var o = Object.create(null);
+    Object.keys(src).forEach(function(k){ o[k.replace(/'/g, "")] = src[k]; });
+    return o;
+  })({
+    // і -> о and other changes of the root
+    "рік":{obl:"рок", u:1, f:{ls:"році"}}, "стіл":{obl:"стол"}, "кіт":{obl:"кот", an:1}, "дім":{obl:"дом", u:1}, "ніс":{obl:"нос"},
+    "міст":{obl:"мост"}, "двір":{obl:"двор"}, "ріг":{obl:"рог", f:{ls:"розі"}}, "пліт":{obl:"плот"}, "бік":{obl:"бок", u:1, f:{ls:"боці"}},
+    "ніж":{obl:"нож"}, "вечір":{obl:"вечор"}, "сон":{obl:"сн", u:1}, "лід":{obl:"льод", u:1}, "вітер":{obl:"вітр", u:1},
+    "день":{obl:"дн"}, "тиждень":{obl:"тижн"}, "пень":{obl:"пн"}, "вогонь":{obl:"вогн", u:1}, "камінь":{obl:"камен"},
+    "корінь":{obl:"корен"}, "ячмінь":{obl:"ячмен", u:1}, "лікоть":{obl:"лікт"}, "ніготь":{obl:"нігт"}, "біль":{obl:"бол", u:1},
+    "кінь":{obl:"кон", an:1, f:{gp:"коней", ip:"кіньми"}}, "лев":{obl:"льв", plu:"лев", an:1}, "орел":{obl:"орл", an:1}, "пес":{obl:"пс", an:1},
+    "гість":{obl:"гост", g:"m", an:1, f:{gp:"гостей"}}, "заєць":{obl:"зайц", an:1},
+    // fleeting о / е in -ок, -ень
+    "листок":{obl:"листк"}, "садок":{obl:"садк"}, "шматок":{obl:"шматк"}, "куток":{obl:"кутк"}, "вівторок":{obl:"вівторк"},
+    "порядок":{obl:"порядк", u:1}, "початок":{obl:"початк", u:1}, "пісок":{obl:"піск", u:1}, "ярмарок":{obl:"ярмарк", u:1},
+    "ранок":{obl:"ранк", u:1}, "ринок":{obl:"ринк", u:1}, "будинок":{obl:"будинк", u:1}, "рахунок":{obl:"рахунк", u:1},
+    "сніданок":{obl:"сніданк", u:1}, "заробіток":{obl:"заробітк", u:1}, "потік":{obl:"поток", u:1, f:{ls:"потоці"}},
+    // masculine, genitive and dative in -у
+    "сніг":{u:1}, "дощ":{u:1}, "мороз":{u:1}, "туман":{u:1}, "холод":{u:1}, "ліс":{u:1}, "світ":{u:1}, "час":{u:1}, "дим":{u:1},
+    "пил":{u:1}, "ґрунт":{u:1}, "театр":{u:1}, "завод":{u:1}, "рух":{u:1}, "сад":{u:1}, "парк":{u:1}, "народ":{u:1},
+    "зміст":{u:1}, "проект":{u:1}, "обід":{u:1}, "вид":{u:1}, "спорт":{u:1}, "транспорт":{u:1}, "шлях":{u:1}, "степ":{u:1},
+    "урок":{u:1}, "суп":{u:1}, "борщ":{u:1}, "мед":{u:1}, "град":{u:1}, "жар":{u:1}, "гомін":{u:1}, "сміх":{u:1},
+    // animate masculine
+    "брат":{an:1}, "син":{an:1}, "батько":{an:1}, "вовк":{an:1}, "ведмідь":{an:1}, "хлопець":{an:1}, "чоловік":{an:1},
+    "учитель":{an:1}, "студент":{an:1}, "лікар":{an:1}, "птах":{an:1}, "дід":{an:1}, "кролик":{an:1}, "собака":{an:1},
+    // feminine ending in a consonant
+    "ніч":{obl:"ноч", g:"f"}, "піч":{obl:"печ", g:"f"}, "сіль":{obl:"сол", g:"f"}, "річ":{obl:"реч", g:"f"}, "любов":{g:"f"},
+    "осінь":{obl:"осен", g:"f"}, "кров":{g:"f"}, "мить":{g:"f", f:{is:"миттю"}}, "верф":{g:"f"}, "тінь":{g:"f"}, "путь":{g:"f"},
+    "мати":{an:1, f:{gs:"матері", ds:"матері", as:"матір", is:"матір'ю", ls:"матері", vs:"мати", np:"матері", gp:"матерів", dp:"матерям", ap:"матерів", ip:"матерями", lp:"матерях", vp:"матері"}},
+    // feminine -а, -я with changes in the genitive plural
+    "нога":{f:{gp:"ніг"}}, "земля":{f:{gp:"земель"}}, "пісня":{f:{gp:"пісень"}}, "вишня":{f:{gp:"вишень"}}, "кухня":{f:{gp:"кухонь"}},
+    "стаття":{f:{gp:"статей"}}, "сестра":{an:1, f:{gp:"сестер"}}, "жінка":{an:1, f:{gp:"жінок"}}, "кішка":{an:1, f:{gp:"кішок"}},
+    "тітка":{an:1, f:{gp:"тіток"}}, "дочка":{an:1, f:{gp:"дочок"}}, "книжка":{f:{gp:"книжок"}}, "ручка":{f:{gp:"ручок"}},
+    "сумка":{f:{gp:"сумок"}}, "ложка":{f:{gp:"ложок"}}, "чашка":{f:{gp:"чашок"}}, "квітка":{f:{gp:"квіток"}},
+    "дошка":{f:{gp:"дошок"}}, "голка":{f:{gp:"голок"}}, "дівчина":{an:1}, "мама":{an:1}, "тато":{an:1},
+    // irregular plural
+    "людина":{an:1, f:{np:"люди", gp:"людей", dp:"людям", ap:"людей", ip:"людьми", lp:"людях", vp:"люди"}},
+    "дитина":{an:1, f:{np:"діти", gp:"дітей", dp:"дітям", ap:"дітей", ip:"дітьми", lp:"дітях", vp:"діти"}},
+    "дитя":{an:1, f:{gs:"дитяти", ds:"дитяті", as:"дитя", is:"дитям", ls:"дитяті", np:"діти", gp:"дітей", dp:"дітям", ap:"дітей", ip:"дітьми", lp:"дітях", vp:"діти"}},
+    "друг":{an:1, f:{np:"друзі", gp:"друзів", dp:"друзям", ap:"друзів", ip:"друзями", lp:"друзях", vp:"друзі"}},
+    "око":{f:{np:"очі", gp:"очей", dp:"очам", ap:"очі", ip:"очима", lp:"очах", vp:"очі"}},
+    "вухо":{f:{np:"вуха", gp:"вух", dp:"вухам", ap:"вуха", ip:"вухами", lp:"вухах", vp:"вуха"}},
+    "слово":{f:{gp:"слів"}}, "місто":{f:{gp:"міст"}}, "ім'я":{f:{gs:"імені", ds:"імені", as:"ім'я", is:"іменем", ls:"імені", vs:"ім'я", np:"імена", gp:"імен", dp:"іменам", ap:"імена", ip:"іменами", lp:"іменах", vp:"імена"}},
+    "плем'я":{f:{gs:"племені", ds:"племені", as:"плем'я", is:"племенем", ls:"племені", vs:"плем'я", np:"племена", gp:"племен", dp:"племенам", ap:"племена", ip:"племенами", lp:"племенах", vp:"племена"}},
+    "теля":{an:1, f:{gs:"теляти", ds:"теляті", as:"теля", is:"телям", ls:"теляті", np:"телята", gp:"телят", dp:"телятам", ap:"телят", ip:"телятами", lp:"телятах", vp:"телята"}},
+    "курча":{an:1, f:{gs:"курчати", ds:"курчаті", as:"курча", is:"курчам", ls:"курчаті", np:"курчата", gp:"курчат", dp:"курчатам", ap:"курчат", ip:"курчатами", lp:"курчатах", vp:"курчата"}}
+  });
+  function nounInfo(w){
+    var lem = norm(w.uk[0] || ""), b = NOUN_DB[lem] || {};
+    return {gender: w.gender || b.g || (/ість$/.test(lem) ? "f" : ""), obl: w.obl || b.obl || "", plu: w.plu || b.plu || "",
+            u: !!b.u, an: !!b.an, f: b.f || null};
+  }
   function genderOf(l){ return /[ая]$/.test(l) ? "f" : /[оеє]$/.test(l) ? "n" : "m"; }
-  function inflNoun(lem, ck, gender){
+  function inflNoun(lem, ck, gender, obl, plu, ni){
+    ni = ni || {};
+    if(ni.f && ni.f[ck]) return ni.f[ck];
+    var c0 = ck[0], n0 = ck[1], f3 = gender === "f" && /[^аяоеє]$/.test(lem);
+    var masc = gender === "m" || (!gender && /[^аяоеєю]$/.test(lem));
+    // animate: accusative = genitive (singular masculine, plural of all genders)
+    if(ni.an){
+      var ni0 = {u: ni.u, f: ni.f};
+      if(ck === "ap") return inflNoun(lem, "gp", gender, obl, plu, ni0);
+      if(ck === "as" && masc) return inflNoun(lem, "gs", gender, obl, plu, ni0);
+    }
+    var sx = n0 === "p" ? (plu || obl) : obl;
+    // the root changes in the oblique cases (рік – року, роком, років): inflect the changed root
+    if(sx && !(c0 === "n" && n0 === "s") && !(f3 && ck === "is")){
+      var tail = (/[аяоеєьй]$/.exec(lem) || [""])[0], lem2 = norm(sx) + tail;
+      if(lem2 !== lem){
+        var r = inflNoun(lem2, ck, gender, "", "", {u: ni.u});
+        return (n0 === "s" && r === lem2) ? lem : r;
+      }
+    }
     var c = ck[0], n = ck[1], st, h, ya, alt, last;
     function pick(o){ return o[c] === undefined ? lem : o[c]; }
     if(/а$/.test(lem)){
@@ -609,10 +699,16 @@ var FIREBASE_CONFIG = {
       return n === "s" ? pick({n: lem, g: st + ya, d: alt + "і", a: st + "у", i: st + (h ? "ею" : "ою"), l: alt + "і", v: st + "о"})
                        : pick({n: st + ya, g: st, d: st + "ам", a: st + ya, i: st + "ами", l: st + "ах", v: st + ya});
     }
+    // neuter abstract nouns: знання, питання, життя, речення
+    if(/([нтлзсцчджш])\1я$/.test(lem) && gender !== "f"){
+      st = lem.slice(0, -1);
+      return n === "s" ? pick({n: lem, g: lem, d: st + "ю", a: lem, i: st + "ям", l: st + "і", v: lem})
+                       : pick({n: lem, g: st.slice(0, -1) + "ь", d: st + "ям", a: lem, i: st + "ями", l: st + "ях", v: lem});
+    }
     if(/я$/.test(lem)){
       st = lem.slice(0, -1); var ii = lastCh(st) === "і";
       return n === "s" ? pick({n: lem, g: st + (ii ? "ї" : "і"), d: st + (ii ? "ї" : "і"), a: st + "ю", i: st + (ii ? "єю" : "ею"), l: st + (ii ? "ї" : "і"), v: st + "є"})
-                       : pick({n: st + (ii ? "ї" : "і"), g: st + "ь", d: st + "ям", a: st + (ii ? "ї" : "і"), i: st + "ями", l: st + "ях", v: st + (ii ? "ї" : "і")});
+                       : pick({n: st + (ii ? "ї" : "і"), g: ii ? st + "й" : st + "ь", d: st + "ям", a: st + (ii ? "ї" : "і"), i: st + "ями", l: st + "ях", v: st + (ii ? "ї" : "і")});
     }
     if(/о$/.test(lem)){
       st = lem.slice(0, -1); last = lastCh(st);
@@ -631,9 +727,15 @@ var FIREBASE_CONFIG = {
       return n === "s" ? pick({n: lem, g: fb + "і", d: fb + "і", a: lem, i: fi, l: fb + "і", v: lem})
                        : pick({n: fb + "і", g: fb + "ей", d: fb + "ям", a: fb + "і", i: fb + "ями", l: fb + "ях", v: fb + "і"});
     }
+    // masculine -ець (хлопець – хлопця, українець – українця)
+    if(/ець$/.test(lem)){
+      st = lem.slice(0, -3) + "ц";
+      return n === "s" ? pick({n: lem, g: st + "я", d: st + "ю", a: lem, i: st + "ем", l: st + "і", v: st + "ю"})
+                       : pick({n: st + "і", g: st + "ів", d: st + "ям", a: st + "і", i: st + "ями", l: st + "ях", v: st + "і"});
+    }
     if(/ь$/.test(lem)){
       st = lem.slice(0, -1);
-      return n === "s" ? pick({n: lem, g: st + "я", d: st + "ю", a: lem, i: st + "ем", l: st + "і", v: st + "ю"})
+      return n === "s" ? pick({n: lem, g: st + (ni.u ? "ю" : "я"), d: st + "ю", a: lem, i: st + "ем", l: st + "і", v: st + "ю"})
                        : pick({n: st + "і", g: st + "ів", d: st + "ям", a: st + "і", i: st + "ями", l: st + "ях", v: st + "і"});
     }
     if(/й$/.test(lem)){
@@ -643,9 +745,10 @@ var FIREBASE_CONFIG = {
     }
     st = lem; last = lastCh(st); h = HUSH.indexOf(last) > -1;
     var vv = ALT_V[last] ? st.slice(0, -1) + ALT_V[last] : st;
-    return n === "s" ? pick({n: lem, g: st + "а", d: st + "у", a: lem, i: st + (h ? "ем" : "ом"), l: ALT_D[last] ? st + "у" : st + "і", v: vv + "е"})
+    return n === "s" ? pick({n: lem, g: st + (ni.u ? "у" : "а"), d: st + "у", a: lem, i: st + (h ? "ем" : "ом"), l: ALT_D[last] ? st + "у" : st + "і", v: vv + "е"})
                      : pick({n: st + (h ? "і" : "и"), g: st + "ів", d: st + "ам", a: st + (h ? "і" : "и"), i: st + "ами", l: st + "ах", v: st + (h ? "і" : "и")});
   }
+ 
   var ADJ_H = {p:{n:"і",g:"их",d:"им",a:"і",i:"ими",l:"их",v:"і"}, m:{n:"ий",g:"ого",d:"ому",a:"ий",i:"им",l:"ому",v:"ий"},
                f:{n:"а",g:"ої",d:"ій",a:"у",i:"ою",l:"ій",v:"а"}, n:{n:"е",g:"ого",d:"ому",a:"е",i:"им",l:"ому",v:"е"}};
   var ADJ_S = {p:{n:"і",g:"іх",d:"ім",a:"і",i:"іми",l:"іх",v:"і"}, m:{n:"ій",g:"ього",d:"ьому",a:"ій",i:"ім",l:"ьому",v:"ій"},
@@ -738,11 +841,11 @@ var FIREBASE_CONFIG = {
     words.forEach(function(w){
       var k = kindOf(w), nomC = (k === "noun" || k === "adj" || k === "pron") ? "ns" : "";
       w.uk.forEach(function(u){ addKey(u, w.si); reg(u, w.si, nomC, k); });
-      if(w.uk.length) rreg(w.si, norm(w.uk[0]), nomC, k, w);
+      if(w.uk.length) rreg(w.si, disp(w.uk[0]), nomC, k, w);
     });
     // 4. reverse direction: sitonian forms -> ukrainian forms
     words.forEach(function(w){
-      var k = kindOf(w), lem = norm(w.uk[0] || "");
+      var k = kindOf(w), lem = disp(w.uk[0] || "");
       if(!lem || lem.indexOf(" ") > -1) return;
       if(k === "verb"){
         var stemSi = siStem(w.si, endings.inf);
@@ -758,7 +861,7 @@ var FIREBASE_CONFIG = {
           if(ck.k === "ns") return;
           var e = dend(k, ck.k);
           if(e === null) return;
-          var f = k === "noun" ? inflNoun(lem, ck.k, w.gender) : lem;
+          var f = k === "noun" ? (function(){ var ni = nounInfo(w); return inflNoun(lem, ck.k, ni.gender, ni.obl, ni.plu, ni); })() : lem;
           if(f) rreg(st + e, f, ck.k, k, w, k === "noun");
         });
       }
@@ -770,7 +873,7 @@ var FIREBASE_CONFIG = {
       var q = W[p + order[i]];
       if(!q || q.sent !== W[p].sent) continue;
       var nn = q.a.filter(function(x){ return x.k === "noun"; })[0];
-      if(nn) return nn.w.gender || genderOf(norm(nn.w.uk[0]));
+      if(nn) return nounInfo(nn.w).gender || genderOf(disp(nn.w.uk[0]));
     }
     return "m";
   }
@@ -843,11 +946,11 @@ var FIREBASE_CONFIG = {
  
   function translateFwd(){
     var text = $("source").value, parts = text.match(TOK) || [];
-    var out = "", i = 0, Wf = [], posOf = {}, sentN = 0;
+    var out = "", i = 0, Wf = [], posOf = {}, sentN = 0, brk = false;
     popData = [];
     parts.forEach(function(q, qi){
-      if(isW(q)){ posOf[qi] = Wf.length; var t = norm(q); Wf.push({t: t, s: t, a: cand[t] || [], sent: sentN}); }
-      else if(/[.!?…;:]/.test(q)) sentN++;
+      if(isW(q)){ posOf[qi] = Wf.length; var t = norm(q); Wf.push({t: t, s: t, a: cand[t] || [], sent: sentN, brk: brk}); brk = false; }
+      else { if(/[.!?…;:]/.test(q)) sentN++; if(/\S/.test(q)) brk = true; }
     });
     while(i < parts.length){
       var p = parts[i];
@@ -929,18 +1032,19 @@ var FIREBASE_CONFIG = {
       }
       if(!done){ items.push({kind: "w", s: p, c: null}); i++; }
     }
-    var W = [], sentN = 0;
+    var W = [], sentN = 0, brk = false;
     items.forEach(function(it){
-      if(it.kind === "sep"){ if(/[.!?…;:]/.test(it.s)) sentN++; return; }
+      if(it.kind === "sep"){ if(/[.!?…;:]/.test(it.s)) sentN++; if(/\S/.test(it.s)) brk = true; return; }
       it.p = W.length;
-      W.push({t: it.c ? norm(it.c[0].uk) : norm(it.s), s: norm(it.s), a: it.c || [], sent: sentN});
+      W.push({t: it.c ? norm(it.c[0].uk) : norm(it.s), s: norm(it.s), a: it.c || [], sent: sentN, brk: brk});
+      brk = false;
     });
     var out = "";
     items.forEach(function(it){
       if(it.kind === "sep"){ out += esc(it.s); return; }
       if(!it.c){ out += '<span class="unk" title="Немає в словнику">' + esc(it.s) + '</span>'; return; }
       var g = genderAround(W, it.p);
-      var textOf = function(x){ return (x.k === "adj" && !x.fin) ? inflAdj(norm(x.uk), x.c || "ns", g) : x.uk; };
+      var textOf = function(x){ return (x.k === "adj" && !x.fin) ? inflAdj(disp(x.uk), x.c || "ns", g) : x.uk; };
       var key = ctxKey(W, it.p, "s:"), ov = overrides[key], x = null, shown = null, amb = false, cu = cuesAt(W, it.p);
       if(ov) x = it.c.filter(function(c){ return textOf(c) === ov; })[0];
       if(!x){
@@ -1035,7 +1139,7 @@ var FIREBASE_CONFIG = {
     }).filter(function(f){ return f.uk; });
   }
   function resetForm(){
-    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true;
+    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true;
     editId = null; $("saveBtn").textContent = "Зберегти";
   }
   function openForm(open){
@@ -1055,6 +1159,8 @@ var FIREBASE_CONFIG = {
     $("nomInput").value = w.nom || "";
     $("genderSel").value = w.gender || "";
     $("gendBox").hidden = kindOf(w) !== "noun";
+    $("oblInput").value = w.obl || ""; $("pluInput").value = w.plu || "";
+    $("stemBox").hidden = kindOf(w) !== "noun";
     $("nomBox").hidden = ["noun","adj","pron"].indexOf(kindOf(w)) < 0;
     (w.forms || []).forEach(function(f){ formRow(f.uk, f.si, f.c); });
     $("saveBtn").textContent = "Зберегти зміни";
@@ -1070,16 +1176,17 @@ var FIREBASE_CONFIG = {
     if(kind !== "verb"){ pres = ""; past = ""; }
     if(kind !== "noun" && kind !== "adj" && kind !== "pron") nom = "";
     var gender = kind === "noun" ? $("genderSel").value : "";
+    var obl = kind === "noun" ? $("oblInput").value.trim() : "", plu = kind === "noun" ? $("pluInput").value.trim() : "";
     if(!si || !uk.length){ setMsg("Заповніть слово і його переклад."); return; }
     var wasEdit = !!editId;
     var cur = wasEdit ? words.filter(function(w){ return w.id === editId; })[0] : null;
     if(cur){
-      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, pres: pres, past: past});
+      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, pres: pres, past: past});
     } else {
       var existing = words.filter(function(w){ return norm(w.si) === norm(si); })[0];
       if(existing){
         var m = {id: existing.id, t: existing.t, si: existing.si, uk: existing.uk.slice(),
-                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", pres: pres || existing.pres || "", past: past || existing.past || ""};
+                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", pres: pres || existing.pres || "", past: past || existing.past || ""};
         uk.forEach(function(u){
           if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u);
         });
@@ -1088,7 +1195,7 @@ var FIREBASE_CONFIG = {
         });
         putWord(m);
       } else {
-        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, pres: pres, past: past});
+        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, pres: pres, past: past});
       }
     }
     resetForm();
@@ -1111,6 +1218,7 @@ var FIREBASE_CONFIG = {
     $("irr").hidden = $("kindSel").value !== "verb";
     $("nomBox").hidden = ["noun","adj","pron"].indexOf($("kindSel").value) < 0;
     $("gendBox").hidden = $("kindSel").value !== "noun";
+    $("stemBox").hidden = $("kindSel").value !== "noun";
     Array.prototype.forEach.call(document.querySelectorAll("#forms .fc"), function(sel){
       fillSelect(sel, $("kindSel").value, sel.value);
     });
@@ -1187,7 +1295,7 @@ var FIREBASE_CONFIG = {
   }
   $("migBtn").onclick = function(){
     missingLocal().forEach(function(w,i){
-      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", pres: w.pres || "", past: w.past || ""});
+      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", pres: w.pres || "", past: w.past || ""});
     });
     var le = localEndings();
     if(hasEnd(le) && !hasEnd(endings)){ endings = le; persistEndings(); fillEnd(); }
@@ -1211,7 +1319,7 @@ var FIREBASE_CONFIG = {
       wordsCol.orderBy("t").onSnapshot(function(snap){
         words = snap.docs.map(function(x){
           var o = x.data() || {};
-          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", pres: o.pres || "", past: o.past || "", t: o.t || 0};
+          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", pres: o.pres || "", past: o.past || "", t: o.t || 0};
         });
         if(!snap.metadata.fromCache) loaded = true;
         refresh(); offerMigration();
@@ -1229,7 +1337,7 @@ var FIREBASE_CONFIG = {
   function ioMsg(t){ $("ioMsg").textContent = t; }
   function exportData(){
     return JSON.stringify({app: "sitono", version: 1, endings: endings, words: words.map(function(w){
-      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", nom: w.nom || "", pres: w.pres || "", past: w.past || "", forms: w.forms || []};
+      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", nom: w.nom || "", pres: w.pres || "", past: w.past || "", forms: w.forms || []};
     })}, null, 2);
   }
   function exportFile(){
@@ -1287,12 +1395,12 @@ var FIREBASE_CONFIG = {
         uk.forEach(function(u){ if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u); });
         m.forms = m.forms || [];
         forms.forEach(function(f){ if(m.forms.map(function(x){ return norm(x.uk); }).indexOf(norm(f.uk)) < 0) m.forms.push(f); });
-        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || "";
+        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || "";
         m.pres = m.pres || w.pres || ""; m.past = m.past || w.past || "";
         if(!touched[key]) updated++;
       } else {
         m = byKey[key] = {id: newId(), t: Date.now() + added, si: si, uk: uk, forms: forms, kind: w.kind || "", nom: w.nom || "",
-                          gender: w.gender || "", pres: w.pres || "", past: w.past || ""};
+                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", pres: w.pres || "", past: w.past || ""};
         added++;
       }
       touched[key] = 1;
@@ -1349,4 +1457,3 @@ var FIREBASE_CONFIG = {
 </script>
 </body>
 </html>
- 
