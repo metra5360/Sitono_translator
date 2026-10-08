@@ -61,6 +61,10 @@ li b{color:var(--accent)}
 .si.guess{border-bottom:2px dashed var(--accent)}
 .si.amb{outline:2px dashed var(--accent);outline-offset:2px;border-radius:4px;padding:0 3px}
 .ro #impBtn,.ro #ioGo{display:none}
+.kbd{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;align-items:center}
+.kbd button{padding:6px 14px;min-width:42px;font-size:1.15rem}
+.kbd button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.arow{display:grid;grid-template-columns:76px 1fr auto;gap:8px;margin-bottom:8px}
 .qq{font-size:1.7rem;font-weight:600;margin:10px 0 4px;overflow-wrap:anywhere}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .tabs button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
@@ -119,6 +123,7 @@ li span{overflow-wrap:anywhere}
  
   <section id="addBox" class="form" style="padding:18px;margin-top:0;border:1px solid var(--line)">
     <h2>Нове слово</h2>
+    <div class="kbd" data-kbd></div>
     <label for="siInput">Слово сітонською</label>
     <input type="text" id="siInput" placeholder="наприклад, Sitono" autocomplete="off">
     <label for="ukInput">Переклад українською</label>
@@ -150,12 +155,26 @@ li span{overflow-wrap:anywhere}
         <label for="dadjcInput">Його вищий ступінь (якщо неправильний)</label>
         <input type="text" id="dadjcInput" placeholder="напр.: кращий" autocomplete="off">
       </div>
+      <label for="ddegSel">Ступені порівняння похідних слів</label>
+      <select id="ddegSel">
+        <option value="">автоматично</option>
+        <option value="all">є вищий і найвищий ступінь</option>
+        <option value="cmp">тільки вищий ступінь (без най-)</option>
+        <option value="none">немає ступенів порівняння</option>
+      </select>
       <label for="dadvInput">Прислівник від цього слова</label>
       <input type="text" id="dadvInput" placeholder="напр., для «добро»: добре" autocomplete="off">
       <label for="dadvcInput">Його вищий ступінь (якщо неправильний)</label>
       <input type="text" id="dadvcInput" placeholder="напр.: краще" autocomplete="off">
     </div>
     <div id="cmpBox" hidden>
+      <label for="degSel">Ступені порівняння</label>
+      <select id="degSel">
+        <option value="">автоматично (зелений, червоний, вчора: без ступенів)</option>
+        <option value="all">є вищий і найвищий ступінь</option>
+        <option value="cmp">тільки вищий ступінь (без най-)</option>
+        <option value="none">немає ступенів порівняння</option>
+      </select>
       <label for="cmpInput">Вищий ступінь українською (якщо неправильний)</label>
       <input type="text" id="cmpInput" placeholder="напр., для «добре»: краще, для «добрий»: кращий" autocomplete="off">
     </div>
@@ -201,6 +220,7 @@ li span{overflow-wrap:anywhere}
       <button id="dirUk" aria-pressed="true">Українська → Sitono</button>
       <button id="dirSi" aria-pressed="false">Sitono → Українська</button>
     </div>
+    <div class="kbd" data-kbd></div>
     <textarea id="source" placeholder="Введіть українське слово або речення"></textarea>
     <div class="result" id="result" aria-live="polite"></div>
     <div class="pop" id="pop" hidden></div>
@@ -231,11 +251,20 @@ li span{overflow-wrap:anywhere}
     <div id="qCard" hidden>
       <div class="qq" id="qWord"></div>
       <div class="note" id="qHint"></div>
+      <div class="kbd" data-kbd></div>
       <input type="text" id="qAns" placeholder="Ваша відповідь" autocomplete="off" style="margin-top:8px">
       <div class="row"><span class="acts"><button id="qCheck" class="primary">Перевірити</button><button id="qSkip" class="ghost">Не знаю</button></span></div>
       <div class="msg" id="qRes" role="status"></div>
     </div>
     <div class="row"><span class="note" id="qScore"></span><button id="qStart">Почати</button></div>
+  </section>
+ 
+  <section id="alphaBox">
+    <h2>Алфавіт Sitono</h2>
+    <p class="note">Ці літери з'являються кнопками біля полів введення: натисніть, щоб вставити її в поле, де стоїть курсор. Для кожної літери можна записати звучання, змінити його або додати власну літеру. «Aa» перемикає великі літери.</p>
+    <div class="kbd" data-kbd></div>
+    <div id="alphaRows"></div>
+    <div class="row"><button id="addLetter">Додати літеру</button></div>
   </section>
  
   <section>
@@ -301,7 +330,7 @@ var FIREBASE_CONFIG = {
  
   function kindOf(w){ return w.kind || (w.verb ? "verb" : ""); }
   function putWord(w){
-    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", t: w.t || Date.now()};
+    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", t: w.t || Date.now()};
     if(wordsCol){ wordsCol.doc(w.id).set(data).catch(onErr); return; }
     data.id = w.id;
     var i = words.map(function(x){ return x.id; }).indexOf(w.id);
@@ -1084,6 +1113,12 @@ var FIREBASE_CONFIG = {
     "частий":{cmp:"частіш", adv:"часто", cadv:"частіше"}, "рідкий":{cmp:"рідш", adv:"рідко", cadv:"рідше"},
     "міцний":{adv:"міцно"}, "чистий":{adv:"чисто"}, "тихий":{adv:"тихо", cadv:"тихіше"}, "гучний":{adv:"гучно"}
   });
+  /* not every word has degrees of comparison: зелений has none, some words only a comparative (no най-) */
+  var NODEG = setOf("зелений червоний синій жовтий помаранчевий фіолетовий рожевий коричневий золотий срібний залізний дерев'яний скляний кам'яний паперовий український англійський польський німецький французький річний місячний щоденний щорічний мертвий єдиний вчора завтра сьогодні тут там тоді завжди ніколи зараз");
+  function degMode(w, lem){
+    if(w.deg === "none" || w.deg === "cmp" || w.deg === "all") return w.deg;
+    return NODEG[norm(lem)] ? "none" : "all";
+  }
   function ukForms(lemma, ck){
     var r = [];
     ["m", "f", "n"].forEach(function(g){ var f = inflAdj(lemma, ck, g); if(r.indexOf(f) < 0) r.push(f); });
@@ -1101,10 +1136,11 @@ var FIREBASE_CONFIG = {
     var out = words.slice(), an = ev(endings.adjnom), ae = ev(endings.advend);
     words.forEach(function(w){
       var k = kindOf(w), st = stemOf(w);
+      var dd = w.ddeg || (w.dadj && NODEG[norm(w.dadj)] ? "none" : "");   // зелений: його прислівник теж без ступенів
       if(w.dadj && an !== null && k !== "adj" && k !== "verb" && k !== "adv" && k !== "pron")
-        out.push({id: w.id + "~adj", si: st + an, uk: [disp(w.dadj)], kind: "adj", nom: an, cmpuk: w.dadjc || "", forms: [], parent: w, gender: "", obl: "", plu: "", pf: "", pfi: ""});
+        out.push({id: w.id + "~adj", si: st + an, uk: [disp(w.dadj)], kind: "adj", nom: an, cmpuk: w.dadjc || "", deg: dd, forms: [], parent: w, gender: "", obl: "", plu: "", pf: "", pfi: ""});
       if(w.dadv && k !== "verb" && k !== "adv" && k !== "pron")
-        out.push({id: w.id + "~adv", si: st + (ae === null ? "" : ae), uk: [disp(w.dadv)], kind: "adv", nom: "", cmpuk: w.dadvc || "", forms: [], parent: w, gender: "", obl: "", plu: "", pf: "", pfi: ""});
+        out.push({id: w.id + "~adv", si: st + (ae === null ? "" : ae), uk: [disp(w.dadv)], kind: "adv", nom: "", cmpuk: w.dadvc || "", deg: dd, forms: [], parent: w, gender: "", obl: "", plu: "", pf: "", pfi: ""});
     });
     return out;
   }
@@ -1114,7 +1150,8 @@ var FIREBASE_CONFIG = {
   function advExtras(w){
     var out = [], lem = disp(w.uk[0] || "");
     if(!/[ое]$/.test(lem)) return out;
-    var ci = ev(endings.adjcmp), sp = ev(endings.adjsup), ae = ev(endings.advend);
+    var mode = degMode(w, lem);
+    var ci = mode === "none" ? null : ev(endings.adjcmp), sp = mode === "all" ? ev(endings.adjsup) : null, ae = ev(endings.advend);
     if(ci === null) return out;
     var cadv = w.cmpuk ? disp(w.cmpuk) : ((ADV_DB[norm(lem)] || {}).cadv || lem.replace(/[ое]$/, "") + "іше");
     var stemSi = siStem(w.si, endings.advend), end = ae === null ? "" : ae;
@@ -1128,7 +1165,8 @@ var FIREBASE_CONFIG = {
     if(!m) return out;
     var b = ADJ_DB[norm(lem)] || {}, stem = m[1], hard = m[2] === "ий";
     var stemSi = siStem(w.si, w.nom), nom = w.nom || "";
-    var ci = ev(endings.adjcmp), sp = ev(endings.adjsup), ae = ev(endings.advend);
+    var mode = degMode(w, lem);
+    var ci = mode === "none" ? null : ev(endings.adjcmp), sp = mode === "all" ? ev(endings.adjsup) : null, ae = ev(endings.advend);
     var cmpStem = w.cmpuk ? disp(w.cmpuk).replace(/(ий|ій)$/, "") : (b.cmp || stem + "іш");
     function addAdj(lemma, c3, pre, infix){
       CKEYS.forEach(function(ck){
@@ -1639,7 +1677,7 @@ var FIREBASE_CONFIG = {
     }).filter(function(f){ return f.uk; });
   }
   function resetForm(){
-    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("aspectSel").value = ""; $("pfiInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true; $("cmpInput").value = ""; $("cmpBox").hidden = true; ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = ""; }); setDerBox("");
+    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("aspectSel").value = ""; $("pfiInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true; $("cmpInput").value = ""; $("cmpBox").hidden = true; ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = ""; }); $("degSel").value = ""; $("ddegSel").value = ""; setDerBox("");
     editId = null; $("saveBtn").textContent = "Зберегти";
   }
   function openForm(open){
@@ -1662,6 +1700,7 @@ var FIREBASE_CONFIG = {
     $("oblInput").value = w.obl || ""; $("pluInput").value = w.plu || ""; $("cmpInput").value = w.cmpuk || "";
     $("cmpBox").hidden = kindOf(w) !== "adj" && kindOf(w) !== "adv";
     ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = w[f] || ""; });
+    $("degSel").value = w.deg || ""; $("ddegSel").value = w.ddeg || "";
     setDerBox(kindOf(w));
     $("stemBox").hidden = kindOf(w) !== "noun";
     $("nomBox").hidden = ["noun","adj","pron"].indexOf(kindOf(w)) < 0;
@@ -1684,16 +1723,17 @@ var FIREBASE_CONFIG = {
     var dadj = $("dadjInput").value.trim(), dadjc = $("dadjcInput").value.trim(), dadv = $("dadvInput").value.trim(), dadvc = $("dadvcInput").value.trim();
     if(kind === "verb" || kind === "pron" || kind === "adv"){ dadj = dadjc = dadv = dadvc = ""; }
     if(kind === "adj"){ dadj = ""; dadjc = ""; }
+    var deg = (kind === "adj" || kind === "adv") ? $("degSel").value : "", ddeg = (kind === "verb" || kind === "pron" || kind === "adv") ? "" : $("ddegSel").value;
     if(!si || !uk.length){ setMsg("Заповніть слово і його переклад."); return; }
     var wasEdit = !!editId;
     var cur = wasEdit ? words.filter(function(w){ return w.id === editId; })[0] : null;
     if(cur){
-      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, pres: pres, pf: pf, pfi: pfi, past: past});
+      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, pres: pres, pf: pf, pfi: pfi, past: past});
     } else {
       var existing = words.filter(function(w){ return norm(w.si) === norm(si); })[0];
       if(existing){
         var m = {id: existing.id, t: existing.t, si: existing.si, uk: existing.uk.slice(),
-                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", cmpuk: cmpuk || existing.cmpuk || "", dadj: dadj || existing.dadj || "", dadjc: dadjc || existing.dadjc || "", dadv: dadv || existing.dadv || "", dadvc: dadvc || existing.dadvc || "", pres: pres || existing.pres || "", pf: pf || existing.pf || "", pfi: pfi || existing.pfi || "", past: past || existing.past || ""};
+                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", cmpuk: cmpuk || existing.cmpuk || "", dadj: dadj || existing.dadj || "", dadjc: dadjc || existing.dadjc || "", dadv: dadv || existing.dadv || "", dadvc: dadvc || existing.dadvc || "", deg: deg || existing.deg || "", ddeg: ddeg || existing.ddeg || "", pres: pres || existing.pres || "", pf: pf || existing.pf || "", pfi: pfi || existing.pfi || "", past: past || existing.past || ""};
         uk.forEach(function(u){
           if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u);
         });
@@ -1702,7 +1742,7 @@ var FIREBASE_CONFIG = {
         });
         putWord(m);
       } else {
-        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, pres: pres, pf: pf, pfi: pfi, past: past});
+        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, pres: pres, pf: pf, pfi: pfi, past: past});
       }
     }
     resetForm();
@@ -1774,6 +1814,7 @@ var FIREBASE_CONFIG = {
   };
  
   function fillEnd(){
+    renderAlpha();
     VERB_ROWS.forEach(function(r){
       var el = $("end_" + r.k);
       if(document.activeElement !== el) el.value = endings[r.k] || "";
@@ -1813,7 +1854,7 @@ var FIREBASE_CONFIG = {
   }
   $("migBtn").onclick = function(){
     missingLocal().forEach(function(w,i){
-      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""});
+      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""});
     });
     var le = localEndings();
     if(hasEnd(le) && !hasEnd(endings)){ endings = le; persistEndings(); fillEnd(); }
@@ -1837,7 +1878,7 @@ var FIREBASE_CONFIG = {
       wordsCol.orderBy("t").onSnapshot(function(snap){
         words = snap.docs.map(function(x){
           var o = x.data() || {};
-          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", cmpuk: o.cmpuk || "", dadj: o.dadj || "", dadjc: o.dadjc || "", dadv: o.dadv || "", dadvc: o.dadvc || "", pres: o.pres || "", pf: o.pf || "", pfi: o.pfi || "", past: o.past || "", t: o.t || 0};
+          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", cmpuk: o.cmpuk || "", dadj: o.dadj || "", dadjc: o.dadjc || "", dadv: o.dadv || "", dadvc: o.dadvc || "", deg: o.deg || "", ddeg: o.ddeg || "", pres: o.pres || "", pf: o.pf || "", pfi: o.pfi || "", past: o.past || "", t: o.t || 0};
         });
         if(!snap.metadata.fromCache) loaded = true;
         refresh(); offerMigration();
@@ -1855,7 +1896,7 @@ var FIREBASE_CONFIG = {
   function ioMsg(t){ $("ioMsg").textContent = t; }
   function exportData(){
     return JSON.stringify({app: "sitono", version: 1, endings: endings, words: words.map(function(w){
-      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", nom: w.nom || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", forms: w.forms || []};
+      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", nom: w.nom || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", forms: w.forms || []};
     })}, null, 2);
   }
   function exportFile(){
@@ -1913,12 +1954,12 @@ var FIREBASE_CONFIG = {
         uk.forEach(function(u){ if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u); });
         m.forms = m.forms || [];
         forms.forEach(function(f){ if(m.forms.map(function(x){ return norm(x.uk); }).indexOf(norm(f.uk)) < 0) m.forms.push(f); });
-        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || ""; m.cmpuk = m.cmpuk || w.cmpuk || ""; m.dadj = m.dadj || w.dadj || ""; m.dadjc = m.dadjc || w.dadjc || ""; m.dadv = m.dadv || w.dadv || ""; m.dadvc = m.dadvc || w.dadvc || "";
+        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || ""; m.cmpuk = m.cmpuk || w.cmpuk || ""; m.dadj = m.dadj || w.dadj || ""; m.dadjc = m.dadjc || w.dadjc || ""; m.dadv = m.dadv || w.dadv || ""; m.dadvc = m.dadvc || w.dadvc || ""; m.deg = m.deg || w.deg || ""; m.ddeg = m.ddeg || w.ddeg || "";
         m.pres = m.pres || w.pres || ""; m.pf = m.pf || w.pf || ""; m.pfi = m.pfi || w.pfi || ""; m.past = m.past || w.past || "";
         if(!touched[key]) updated++;
       } else {
         m = byKey[key] = {id: newId(), t: Date.now() + added, si: si, uk: uk, forms: forms, kind: w.kind || "", nom: w.nom || "",
-                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""};
+                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""};
         added++;
       }
       touched[key] = 1;
@@ -1947,6 +1988,75 @@ var FIREBASE_CONFIG = {
   $("ioGo").onclick = function(){ importText($("ioText").value); };
   $("ioClose").onclick = function(){ $("ioPaste").hidden = true; };
  
+ 
+  /* ---------- alphabet and on-screen keyboard ---------- */
+  var ALPHA_DEFAULT = [{l: "ŋ", s: "як «н» у слові «банк» [ŋ]"}, {l: "ð", s: "як th в англійському this [ð]"}, {l: "ʃ", s: "як «ш» [ʃ]"}];
+  var kbdCaps = false, lastEl = null;
+  function getAlpha(){ return Array.isArray(endings.alpha) ? endings.alpha : ALPHA_DEFAULT; }
+  function renderKbd(){
+    var h = '<button type="button" class="ghost" data-caps="1" aria-pressed="' + kbdCaps + '" title="Великі літери">Aa</button>' +
+      getAlpha().filter(function(a){ return a.l; }).map(function(a){
+        var ch = kbdCaps ? a.l.toUpperCase() : a.l;
+        return '<button type="button" data-ch="' + esc(ch) + '" title="' + esc(ch + (a.s ? " — " + a.s : "")) + '">' + esc(ch) + '</button>';
+      }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-kbd]"), function(el){ el.innerHTML = h; });
+  }
+  function renderAlphaRows(){
+    $("alphaRows").innerHTML = getAlpha().map(function(x, i){
+      return '<div class="arow"><input type="text" class="al" data-i="' + i + '" value="' + esc(x.l) + '" maxlength="3" aria-label="Літера">' +
+             '<input type="text" class="as" data-i="' + i + '" value="' + esc(x.s) + '" placeholder="Звучання, наприклад: як «ш» [ʃ]" aria-label="Звучання">' +
+             '<button type="button" class="ghost" data-adel="' + i + '" aria-label="Видалити літеру">✕</button></div>';
+    }).join("");
+  }
+  function renderAlpha(){
+    renderKbd();
+    var ab = $("alphaBox");
+    if(!(document.activeElement && ab.contains && ab.contains(document.activeElement))) renderAlphaRows();   // do not interrupt typing
+  }
+  function editAlpha(fn){
+    var a = JSON.parse(JSON.stringify(getAlpha()));
+    fn(a);
+    endings.alpha = a;
+    clearTimeout(endT); endT = setTimeout(persistEndings, 400);
+    renderKbd();
+  }
+  $("alphaRows").addEventListener("input", function(e){
+    var t = e.target, i = t.getAttribute("data-i");
+    if(i === null) return;
+    editAlpha(function(a){ if(a[+i]) a[+i][t.className === "al" ? "l" : "s"] = t.value; });
+  });
+  $("alphaRows").addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest("button") : null;
+    if(!b || b.getAttribute("data-adel") === null) return;
+    editAlpha(function(a){ a.splice(+b.getAttribute("data-adel"), 1); });
+    renderAlphaRows();
+  });
+  $("addLetter").onclick = function(){
+    editAlpha(function(a){ a.push({l: "", s: ""}); });
+    renderAlphaRows();
+    var inputs = $("alphaRows").querySelectorAll ? $("alphaRows").querySelectorAll(".al") : [];
+    if(inputs.length) inputs[inputs.length - 1].focus();
+  };
+  if(document.addEventListener){
+    document.addEventListener("focusin", function(e){
+      var t = e.target;
+      if(t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text")) && !(t.closest && t.closest("#alphaBox"))) lastEl = t;
+    });
+    document.addEventListener("mousedown", function(e){ if(e.target.closest && e.target.closest(".kbd button")) e.preventDefault(); });   // keep the cursor in the field
+    document.addEventListener("click", function(e){
+      var b = e.target.closest ? e.target.closest(".kbd button") : null;
+      if(!b) return;
+      if(b.getAttribute("data-caps")){ kbdCaps = !kbdCaps; renderKbd(); return; }
+      var ch = b.getAttribute("data-ch");
+      if(!ch) return;
+      var el = lastEl && document.body.contains(lastEl) && !lastEl.disabled ? lastEl : $("source");
+      var st = el.selectionStart == null ? el.value.length : el.selectionStart, en = el.selectionEnd == null ? st : el.selectionEnd;
+      el.value = el.value.slice(0, st) + ch + el.value.slice(en);
+      el.selectionStart = el.selectionEnd = st + ch.length;
+      el.focus();
+      el.dispatchEvent(new Event("input", {bubbles: true}));
+    });
+  }
  
   /* events: missing words and training */
   $("missBox").addEventListener("click", function(e){
