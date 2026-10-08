@@ -60,6 +60,7 @@ li b{color:var(--accent)}
 .si.guess{border-bottom:2px dashed var(--accent)}
 .si.amb{outline:2px dashed var(--accent);outline-offset:2px;border-radius:4px;padding:0 3px}
 .ro #impBtn,.ro #ioGo{display:none}
+.qq{font-size:1.7rem;font-weight:600;margin:10px 0 4px;overflow-wrap:anywhere}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .tabs button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 .chk{display:flex;gap:8px;align-items:center;color:var(--ink);margin:14px 0 4px;font-size:.95rem}
@@ -92,9 +93,27 @@ li span{overflow-wrap:anywhere}
     <p class="note">Одні закінчення для всіх дієслів, які ви позначите як дієслова. Сітонське дієслово записуйте в інфінітиві: якщо інфінітив — <b>amis</b> і закінчення інфінітива <b>is</b>, то основа <b>am</b>, а «я» з закінченням <b>ie</b> дасть <b>amie</b>. Порожнє закінчення — ця форма не створюється.</p>
     <h3>Дієслова</h3>
     <div id="endRows"></div>
+    <label for="futStyle" style="margin-top:12px">Майбутній час в українській при перекладі з Sitono</label>
+    <select id="futStyle" data-k="fstyle">
+      <option value="sy">простий: любитиму</option>
+      <option value="an">складений: буду любити</option>
+    </select>
+    <h3>Майбутній час і умовний спосіб</h3>
+    <p class="note">Майбутній час у Sitono: допоміжне слово + теперішня форма (наприклад «ba lubie»). Умовний спосіб: частка + минула форма. Наказовий спосіб збігається з теперішньою формою «ти» або «ви». Порожнє слово означає, що ці форми не створюються.</p>
+    <div class="erow"><label for="end_futword" style="margin:0">Майбутній час: допоміжне слово</label><input type="text" id="end_futword" data-k="futword" autocomplete="off"></div>
+    <div class="erow"><label for="end_futpos" style="margin:0">Воно стоїть</label><select id="end_futpos" data-k="futpos"><option value="before">перед дієсловом</option><option value="after">після дієслова</option></select></div>
+    <div class="erow"><label for="end_condword" style="margin:0">Умовний спосіб: частка</label><input type="text" id="end_condword" data-k="condword" autocomplete="off"></div>
+    <div class="erow"><label for="end_condpos" style="margin:0">Вона стоїть</label><select id="end_condpos" data-k="condpos"><option value="before">перед дієсловом</option><option value="after">після дієслова</option></select></div>
     <p class="note" style="margin-top:14px">Порожнє поле означає, що форма не створюється. Дефіс «-» означає форму без закінчення.</p>
     <p class="note">Далі: закінчення відмінків, спільні для всіх іменників, прикметників і займенників. Називний відмінок однини у кожного слова свій: його закінчення вказується в самому слові (поле «Закінчення називного»). Решта відмінків утворюються як основа слова плюс закінчення з таблиці. Наприклад, слово <b>Wamu</b> із закінченням називного <b>u</b> і родовим закінченням <b>to</b> дасть <b>Wamto</b>.</p>
     <div id="declRows"></div>
+    <h3>Ступені порівняння та прислівники</h3>
+    <p class="note">Для прикметників. «Вставка вищого ступеня» додається між основою і закінченням (гарн<b>er</b>ий), префікс найвищого ступеня ставиться перед словом. Порожнє поле означає, що форма не створюється, дефіс «-» означає нічого не додавати.</p>
+    <div class="erow"><label for="end_adjcmp" style="margin:0">Вищий ступінь: вставка</label><input type="text" id="end_adjcmp" data-k="adjcmp" autocomplete="off"></div>
+    <div class="erow"><label for="end_adjsup" style="margin:0">Найвищий ступінь: префікс</label><input type="text" id="end_adjsup" data-k="adjsup" autocomplete="off"></div>
+    <div class="erow"><label for="end_advend" style="margin:0">Прислівник: закінчення</label><input type="text" id="end_advend" data-k="advend" autocomplete="off"></div>
+    <div class="erow"><label for="end_adjnom" style="margin:0">Прикметник, утворений від іншого слова: закінчення називного</label><input type="text" id="end_adjnom" data-k="adjnom" autocomplete="off"></div>
+    <p class="note">Слово можна пов'язати з прикметником і прислівником (добро, добрий, добре): у формі слова є розділ «Похідні слова». Сітонські форми утворюються так: основа слова + закінчення прислівника або закінчення називного прикметника з цього розділу.</p>
   </section>
  
   <section id="addBox" class="form" style="padding:18px;margin-top:0;border:1px solid var(--line)">
@@ -109,6 +128,7 @@ li span{overflow-wrap:anywhere}
       <option value="verb">Дієслово</option>
       <option value="noun">Іменник</option>
       <option value="adj">Прикметник</option>
+      <option value="adv">Прислівник (добре — краще — найкраще)</option>
       <option value="pron">Займенник або слово з власними формами</option>
     </select>
     <p class="note" style="margin:6px 0 0">Закінчення для кожного типу задаються в розділі «Закінчення слів».</p>
@@ -120,6 +140,23 @@ li span{overflow-wrap:anywhere}
         <option value="f">жіночий</option>
         <option value="n">середній</option>
       </select>
+    </div>
+    <div id="derBox" hidden>
+      <p class="note" style="margin:10px 0 0"><b>Похідні слова.</b> Сітонські форми утворюються зі спільних закінчень (розділ «Закінчення слів»). Вписуйте лише українські слова.</p>
+      <div id="dadjWrap">
+        <label for="dadjInput">Прикметник від цього слова</label>
+        <input type="text" id="dadjInput" placeholder="напр., для «добро»: добрий" autocomplete="off">
+        <label for="dadjcInput">Його вищий ступінь (якщо неправильний)</label>
+        <input type="text" id="dadjcInput" placeholder="напр.: кращий" autocomplete="off">
+      </div>
+      <label for="dadvInput">Прислівник від цього слова</label>
+      <input type="text" id="dadvInput" placeholder="напр., для «добро»: добре" autocomplete="off">
+      <label for="dadvcInput">Його вищий ступінь (якщо неправильний)</label>
+      <input type="text" id="dadvcInput" placeholder="напр.: краще" autocomplete="off">
+    </div>
+    <div id="cmpBox" hidden>
+      <label for="cmpInput">Вищий ступінь українською (якщо неправильний)</label>
+      <input type="text" id="cmpInput" placeholder="напр., для «добре»: краще, для «добрий»: кращий" autocomplete="off">
     </div>
     <div id="stemBox" hidden>
       <label for="oblInput">Основа непрямих відмінків (якщо корінь змінюється)</label>
@@ -134,6 +171,15 @@ li span{overflow-wrap:anywhere}
     <div id="irr" hidden>
       <label for="presInput">Основа теперішнього часу (для неправильних дієслів, необов'язково)</label>
       <input type="text" id="presInput" placeholder="напр., для «йти»: ід" autocomplete="off">
+      <label for="pfiInput">Доконаний вид (інфінітив), якщо у слова є пара</label>
+      <input type="text" id="pfiInput" placeholder="напр., для «іти»: піти" autocomplete="off">
+      <p class="note" style="margin:4px 0 0">Недоконаний і доконаний вид це одне слово. Для поширених пар (іти і піти, читати і прочитати) пара знаходиться сама.</p>
+      <label for="aspectSel">Вид слова, вписаного вище</label>
+      <select id="aspectSel">
+        <option value="">визначити автоматично</option>
+        <option value="ipf">недоконаний (є теперішній час)</option>
+        <option value="pf">доконаний (немає теперішнього часу)</option>
+      </select>
       <label for="pastInput">Основа минулого часу (необов'язково)</label>
       <input type="text" id="pastInput" placeholder="напр., для «йти»: йш" autocomplete="off">
     </div>
@@ -162,6 +208,33 @@ li span{overflow-wrap:anywhere}
       <span class="note">Жовтим позначено слова, яких ще немає в словнику.</span>
       <button id="copyBtn">Копіювати</button>
     </div>
+  </section>
+ 
+  <section id="missBox" hidden>
+    <h2>Слова без перекладу</h2>
+    <p class="note" id="missHint" style="margin:0"></p>
+    <ul id="missList"></ul>
+    <div id="todoWrap" hidden>
+      <h3>Відкладені слова</h3>
+      <ul id="todoList"></ul>
+    </div>
+  </section>
+ 
+  <section id="quizBox">
+    <h2>Тренування</h2>
+    <div class="tabs">
+      <button id="qDirSi" aria-pressed="true">Sitono → українська</button>
+      <button id="qDirUk" aria-pressed="false">Українська → Sitono</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="qForms"> Додати форми слів (відмінки, часи)</label>
+    <div id="qCard" hidden>
+      <div class="qq" id="qWord"></div>
+      <div class="note" id="qHint"></div>
+      <input type="text" id="qAns" placeholder="Ваша відповідь" autocomplete="off" style="margin-top:8px">
+      <div class="row"><span class="acts"><button id="qCheck" class="primary">Перевірити</button><button id="qSkip" class="ghost">Не знаю</button></span></div>
+      <div class="msg" id="qRes" role="status"></div>
+    </div>
+    <div class="row"><span class="note" id="qScore"></span><button id="qStart">Почати</button></div>
   </section>
  
   <section>
@@ -227,7 +300,7 @@ var FIREBASE_CONFIG = {
  
   function kindOf(w){ return w.kind || (w.verb ? "verb" : ""); }
   function putWord(w){
-    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", pres: w.pres || "", past: w.past || "", t: w.t || Date.now()};
+    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", t: w.t || Date.now()};
     if(wordsCol){ wordsCol.doc(w.id).set(data).catch(onErr); return; }
     data.id = w.id;
     var i = words.map(function(x){ return x.id; }).indexOf(w.id);
@@ -301,17 +374,17 @@ var FIREBASE_CONFIG = {
   }
  
   /* ---------- noun / adjective / pronoun declension ---------- */
-  var KIND_NAMES = {verb:"дієслово", noun:"іменник", adj:"прикметник", pron:"займенник"};
-  var CASES = [["n","Називний"],["g","Родовий"],["d","Давальний"],["a","Знахідний"],["i","Орудний"],["l","Місцевий"],["v","Кличний"]];
+  var KIND_NAMES = {verb:"дієслово", noun:"іменник", adj:"прикметник", adv:"прислівник", pron:"займенник"};
+  var CASES = [["n","Називний"],["g","Родовий"],["d","Давальний"],["a","Знахідний"],["i","Орудний"]];
   var CKEYS = [];
   CASES.forEach(function(c){ ["s","p"].forEach(function(n){ CKEYS.push({k: c[0] + n, label: c[1] + (n === "s" ? ", одн." : ", множ.")}); }); });
   var CLASSES = [["all","Спільні закінчення для іменників, прикметників і займенників"]];
   var UK_END = {
-    noun: {gs:["а","я","у","ю","и","і","ї"], ds:["у","ю","ові","еві","єві","і","ї"], as:["а","я","у","ю"],
+    noun: {gs:["а","я","у","ю","и","і","ї","ові","еві"], ds:["у","ю","ові","еві","єві","і","ї"], as:["а","я","у","ю"],
            is:["ом","ем","єм","ою","ею","єю","ю"], ls:["і","у","ю","ові","еві","ї"], vs:["е","є","у","ю","о"],
-           np:["и","і","ї","а","я"], gp:["ів","їв","ей",""], dp:["ам","ям"], ap:["ів","їв","ей","и","і","ї","а","я"],
+           np:["и","і","ї","а","я"], gp:["ів","їв","ей","","ах","ях"], dp:["ам","ям"], ap:["ів","їв","ей","и","і","ї","а","я"],
            ip:["ами","ями"], lp:["ах","ях"], vp:["и","і","ї","а","я"]},
-    adj:  {ns:["ий","ій","а","я","е","є"], gs:["ого","ього","ої","ьої"], ds:["ому","ьому","ій","ї"],
+    adj:  {ns:["ий","ій","а","я","е","є"], gs:["ого","ього","ої","ьої","ому","ьому","ім","ій"], ds:["ому","ьому","ій","ї"],
            as:["ого","ього","у","ю","е","є","ий"], is:["им","ім","ою","ьою"], ls:["ому","ьому","ім","ій"],
            vs:["ий","ій","а","я","е","є"], np:["і","ї"], gp:["их","іх"], dp:["им","ім"], ap:["і","ї","их","іх"],
            ip:["ими","іми"], lp:["их","іх"], vp:["і","ї"]}
@@ -339,14 +412,22 @@ var FIREBASE_CONFIG = {
       if(kind === "noun"){
         var ni = nounInfo(w);
         [ni.obl, ni.plu].forEach(function(x){ x = norm(x || ""); if(x && stems.indexOf(x) < 0) stems.push(x); });
-        if(ni.f) Object.keys(ni.f).forEach(function(kk){ var e = dend(kind, kk); if(e !== null) addExact(norm(ni.f[kk]), stemSi + e, kk); });
+        if(ni.f) Object.keys(ni.f).forEach(function(kk){
+          if(kk[0] === "v") return;
+          var k2 = kk[0] === "l" ? "g" + kk[1] : kk, e = dend(kind, k2);   // locative = genitive
+          if(e !== null) addExact(norm(ni.f[kk]), stemSi + e, k2);
+        });
       }
       // singular cases first, so an ambiguous form (зими) is read as singular
       CKEYS.filter(function(c){ return c.k[1] === "s"; }).concat(CKEYS.filter(function(c){ return c.k[1] === "p"; })).forEach(function(ck){
         var e = dend(kind, ck.k);
         if(e === null) return;
         (UK_END[kind][ck.k] || []).forEach(function(ue){
-          stems.forEach(function(st){ if(st.length >= 2) addExact(st + ue, stemSi + e, ck.k); });
+          stems.forEach(function(st){
+            // np / ap in -і only after a soft or hush consonant (хлопці, ножі), not лісі
+            if(kind === "noun" && ue === "і" && (ck.k === "np" || ck.k === "ap") && !(/[жчшщцй]$/.test(st) || /ь$|ець$/.test(n))) return;
+            if(st.length >= 2) addExact(st + ue, stemSi + e, ck.k);
+          });
         });
       });
       // nominative singular of an adjective in every gender (холодний, холодна, холодне) = the word itself
@@ -359,6 +440,7 @@ var FIREBASE_CONFIG = {
   function formSi(w, f){
     if(f.si) return f.si;
     var k = kindOf(w);
+    if(f.c && f.c[0] === "l") f = {uk: f.uk, si: f.si, c: "g" + f.c[1]};   // locative = genitive
     if(f.c && k === "verb"){ var ve = ev(endings[f.c]); if(ve !== null) return siStem(w.si, endings.inf) + ve; }
     if(f.c && (k === "noun" || k === "adj" || k === "pron")){
       var e = dend(k, f.c);
@@ -367,30 +449,251 @@ var FIREBASE_CONFIG = {
     return w.si;
   }
  
-  function addVerb(w, addKey){
-    var stemSi = siStem(w.si, endings.inf), base = [], autoPres = [], autoPast = [];
-    w.uk.forEach(function(u){
-      var n = norm(u), m = /^([^ ]+?)(ти|ть)$/.exec(n);
-      if(!m) return;
-      var s1 = m[1], s0 = s1.replace(/[аеєиіїоуюя]$/, "");
-      base.push(s1, s0);
-      if(/(ув|юв)а$/.test(s1)) base.push(s1.slice(0, -2));
-      // built-in irregular verbs: іти / йти and their prefixed forms (вийти, знайти, піти ...)
-      var ir = irrOf(n);
-      if(ir){ autoPres.push(ir.pres); autoPast.push(ir.past); }
+  /* ---------- verbs: aspect pairs, irregular forms, compound future and conditional ---------- */
+  var PERS = ["ya", "ty", "vin", "my", "vy", "vony"];
+  var PERS_IDX = {ya:0, ty:1, vin:2, my:3, vy:4, vony:5};
+  var PAST_KEYS = ["pm", "pf", "pn", "pp"];
+  var FUT_KEYS = ["fya", "fty", "fvin", "fmy", "fvy", "fvony"];
+  var FUT_BE = ["буду", "будеш", "буде", "будемо", "будете", "будуть"];
+  var FUT_SUF = ["му", "меш", "ме", "мемо", "мете", "муть"];
+  /* pres = the six present forms of an imperfective verb (or the six non-past forms of a perfective one);
+     fut = irregular future of an imperfective verb; imp = imperative (ти, ми, ви); pf = perfective verb */
+  var VERB_DB = (function(src){
+    var o = Object.create(null);
+    Object.keys(src).forEach(function(k){ o[k.replace(/'/g, "")] = src[k]; });
+    return o;
+  })({
+    "бути":{imp:["будь","будьмо","будьте"], fut:["буду","будеш","буде","будемо","будете","будуть"]},
+    "їсти":{imp:["їж","їжмо","їжте"], pres:["їм","їси","їсть","їмо","їсте","їдять"]},
+    "пити":{imp:["пий","пиймо","пийте"], pres:["п'ю","п'єш","п'є","п'ємо","п'єте","п'ють"]},
+    "жити":{pres:["живу","живеш","живе","живемо","живете","живуть"]},
+    "брати":{pres:["беру","береш","бере","беремо","берете","беруть"]},
+    "писати":{pres:["пишу","пишеш","пише","пишемо","пишете","пишуть"]},
+    "казати":{pres:["кажу","кажеш","каже","кажемо","кажете","кажуть"]},
+    "хотіти":{pres:["хочу","хочеш","хоче","хочемо","хочете","хочуть"]},
+    "могти":{pres:["можу","можеш","може","можемо","можете","можуть"]},
+    "бігти":{pres:["біжу","біжиш","біжить","біжимо","біжите","біжать"]},
+    "брехати":{pres:["брешу","брешеш","бреше","брешемо","брешете","брешуть"]},
+    "сидіти":{pres:["сиджу","сидиш","сидить","сидимо","сидите","сидять"]},
+    "ходити":{pres:["ходжу","ходиш","ходить","ходимо","ходите","ходять"]},
+    "носити":{pres:["ношу","носиш","носить","носимо","носите","носять"]},
+    "возити":{pres:["вожу","возиш","возить","возимо","возите","возять"]},
+    "просити":{pres:["прошу","просиш","просить","просимо","просите","просять"]},
+    "платити":{pres:["плачу","платиш","платить","платимо","платите","платять"]},
+    "ставити":{pres:["ставлю","ставиш","ставить","ставимо","ставите","ставлять"]},
+    "спати":{pres:["сплю","спиш","спить","спимо","спите","сплять"]},
+    "стояти":{pres:["стою","стоїш","стоїть","стоїмо","стоїте","стоять"]},
+    "лізти":{pres:["лізу","лізеш","лізе","ліземо","лізете","лізуть"]},
+    "нести":{pres:["несу","несеш","несе","несемо","несете","несуть"]},
+    "вести":{pres:["веду","ведеш","веде","ведемо","ведете","ведуть"]},
+    "мити":{pres:["мию","миєш","миє","миємо","миєте","миють"]},
+    "дати":{pf:1, imp:["дай","дамо","дайте"], pres:["дам","даси","дасть","дамо","дасте","дадуть"]},
+    "взяти":{pf:1, imp:["візьми","візьмімо","візьміть"], pres:["візьму","візьмеш","візьме","візьмемо","візьмете","візьмуть"]},
+    "сісти":{pf:1, imp:["сядь","сядьмо","сядьте"], pres:["сяду","сядеш","сяде","сядемо","сядете","сядуть"]},
+    "лягти":{pf:1, imp:["ляж","ляжмо","ляжте"], pres:["ляжу","ляжеш","ляже","ляжемо","ляжете","ляжуть"]},
+    "змогти":{pf:1, pres:["зможу","зможеш","зможе","зможемо","зможете","зможуть"]},
+    "стати":{pf:1, pres:["стану","станеш","стане","станемо","станете","стануть"]},
+    "піти":{pf:1, pres:["піду","підеш","піде","підемо","підете","підуть"]},
+    "прийти":{pf:1, pres:["прийду","прийдеш","прийде","прийдемо","прийдете","прийдуть"]},
+    "написати":{pf:1, pres:["напишу","напишеш","напише","напишемо","напишете","напишуть"]},
+    "сказати":{pf:1, pres:["скажу","скажеш","скаже","скажемо","скажете","скажуть"]},
+    "допомогти":{pf:1, pres:["допоможу","допоможеш","допоможе","допоможемо","допоможете","допоможуть"]},
+    "відповісти":{pf:1, pres:["відповім","відповіси","відповість","відповімо","відповісте","відповідять"]},
+    "зрозуміти":{pf:1, pres:["зрозумію","зрозумієш","зрозуміє","зрозуміємо","зрозумієте","зрозуміють"]},
+    "розуміти":{pres:["розумію","розумієш","розуміє","розуміємо","розумієте","розуміють"]},
+    "продати":{pf:1, pres:["продам","продаси","продасть","продамо","продасте","продадуть"]},
+    "відкрити":{pf:1, pres:["відкрию","відкриєш","відкриє","відкриємо","відкриєте","відкриють"]},
+    "закрити":{pf:1, pres:["закрию","закриєш","закриє","закриємо","закриєте","закриють"]},
+    "почати":{pf:1, pres:["почну","почнеш","почне","почнемо","почнете","почнуть"]},
+    "встати":{pf:1, pres:["встану","встанеш","встане","встанемо","встанете","встануть"]},
+    "прожити":{pf:1, pres:["проживу","проживеш","проживе","проживемо","проживете","проживуть"]},
+    "постояти":{pf:1, pres:["постою","постоїш","постоїть","постоїмо","постоїте","постоять"]},
+    "посидіти":{pf:1, pres:["посиджу","посидиш","посидить","посидимо","посидите","посидять"]},
+    "полежати":{pf:1, pres:["полежу","полежиш","полежить","полежимо","полежите","полежать"]},
+    "поспати":{pf:1, pres:["посплю","поспиш","поспить","поспимо","поспите","поспять"]},
+    "захотіти":{pf:1, pres:["захочу","захочеш","захоче","захочемо","захочете","захочуть"]},
+    "лежати":{pres:["лежу","лежиш","лежить","лежимо","лежите","лежать"]},
+    "приходити":{pres:["приходжу","приходиш","приходить","приходимо","приходите","приходять"]},
+    "виходити":{pres:["виходжу","виходиш","виходить","виходимо","виходите","виходять"]},
+    "заходити":{pres:["заходжу","заходиш","заходить","заходимо","заходите","заходять"]},
+    "знаходити":{pres:["знаходжу","знаходиш","знаходить","знаходимо","знаходите","знаходять"]},
+    "з'їсти":{pf:1, pres:["з'їм","з'їси","з'їсть","з'їмо","з'їсте","з'їдять"]},
+    "випити":{pf:1, pres:["вип'ю","вип'єш","вип'є","вип'ємо","вип'єте","вип'ють"]}
+  });
+  /* one Sitonian verb = one word for both aspects: imperfective -> perfective (the pair is found automatically) */
+  var ASPECT_PAIRS = {"іти":"піти", "йти":"піти", "бачити":"побачити", "робити":"зробити", "писати":"написати", "читати":"прочитати",
+    "брати":"взяти", "давати":"дати", "казати":"сказати", "говорити":"сказати", "питати":"запитати", "відповідати":"відповісти",
+    "думати":"подумати", "їсти":"з'їсти", "пити":"випити", "любити":"полюбити", "купувати":"купити", "продавати":"продати",
+    "відкривати":"відкрити", "закривати":"закрити", "починати":"почати", "закінчувати":"закінчити", "розуміти":"зрозуміти",
+    "чекати":"почекати", "допомагати":"допомогти", "стояти":"постояти", "сидіти":"посидіти", "лежати":"полежати",
+    "жити":"прожити", "працювати":"попрацювати", "грати":"пограти", "спати":"поспати", "вчити":"вивчити", "учити":"вивчити",
+    "знаходити":"знайти", "приходити":"прийти", "виходити":"вийти", "заходити":"зайти", "ставати":"стати", "сідати":"сісти",
+    "лягати":"лягти", "вставати":"встати", "могти":"змогти", "хотіти":"захотіти"};
+  var PAIR_OF = Object.create(null), PAIR_REV = Object.create(null);
+  Object.keys(ASPECT_PAIRS).forEach(function(k){
+    PAIR_OF[norm(k)] = ASPECT_PAIRS[k];
+    if(!PAIR_REV[norm(ASPECT_PAIRS[k])]) PAIR_REV[norm(ASPECT_PAIRS[k])] = k;
+  });
+  function verbInfo(lem){
+    var b = VERB_DB[norm(lem)] || {};
+    return {pres: b.pres || null, fut: b.fut || null, imp: b.imp || null, dbpf: !!b.pf};
+  }
+  // the Ukrainian infinitives of one entry with their aspect: [{lem, pf, main}]
+  function aspects(w){
+    var out = [], mn = norm(w.uk[0] || ""), ir = irrOf(mn), vi = verbInfo(mn);
+    var mpf = w.pf === "pf" ? true : w.pf === "ipf" ? false : !!(vi.dbpf || (ir && ir.pf));
+    w.uk.forEach(function(u, i){ if(/т[иь]$/.test(norm(u))) out.push({lem: disp(u), pf: mpf, main: i === 0}); });
+    var partner = w.pfi ? disp(w.pfi) : (!mpf && PAIR_OF[mn]) ? PAIR_OF[mn] : (mpf && PAIR_REV[mn]) ? PAIR_REV[mn] : "";
+    if(partner && /ти$/.test(norm(partner)) && !out.some(function(o){ return norm(o.lem) === norm(partner); })) out.push({lem: partner, pf: !mpf, main: false});
+    // іти and йти are the same verb
+    out.slice().forEach(function(o){
+      var alt = norm(o.lem) === "іти" ? "йти" : norm(o.lem) === "йти" ? "іти" : "";
+      if(alt && !out.some(function(x){ return norm(x.lem) === alt; })) out.push({lem: alt, pf: o.pf, main: false, alt: true});
     });
-    var customPres = w.pres ? [norm(w.pres)] : autoPres, customPast = w.past ? [norm(w.past)] : autoPast;
-    var pres = w.pres ? customPres : base.concat(autoPres), past = w.past ? customPast : base.concat(autoPast);
-    VERB_ROWS.forEach(function(r){
-      var e = ev(endings[r.k]);
-      if(e === null || !r.uk.length) return;
-      var isPast = /^p[mfnp]$/.test(r.k), custom = isPast ? customPast : customPres;
-      r.uk.concat(r.k === "pm" ? ["ов"] : []).forEach(function(ue){
-        (isPast ? past : pres).forEach(function(st){
-          var isCustom = custom.indexOf(st) > -1;
-          if(ue === "ов" && !isCustom) return;
-          if(st.length >= (isCustom ? 1 : 2)) addKey(st + ue, stemSi + e, false, r.k);
+    return out;
+  }
+  // Ukrainian form of one verb: present (imperfective) / non-past (perfective) / past
+  function conjA(w, a, key){
+    var lem = a.lem, m = /^(.+?)ти$/.exec(lem);
+    if(!m) return null;
+    var vi = verbInfo(lem), s1 = m[1], ir = irrOf(norm(lem));
+    var cp = a.main && w.pres ? norm(w.pres) : null, cs = a.main && w.past ? norm(w.past) : null;
+    if(key === "inf") return lem;
+    if(/^p[mfnp]$/.test(key)){
+      var past = cs || (ir && ir.past) || null;
+      if(key === "pm") return past ? past + "ов" : s1 + "в";
+      return (past || s1) + (key === "pf" ? "ла" : key === "pn" ? "ло" : "ли");
+    }
+    var ix = PERS_IDX[key];
+    if(ix === undefined) return null;
+    if(!cp && vi.pres) return vi.pres[ix];
+    var pres = cp || (ir && ir.pres) || null;
+    if(pres) return pres + (/[аеєиіїоуюя]$/.test(pres) ? E1V : E1C)[key];
+    var mu = /^(.+(?:ув|юв))ати$/.exec(lem), mv = /^(.*(?:да|ста|зна))вати$/.exec(lem);
+    if(mu) return mu[1].slice(0, -1) + E1V[key];
+    if(mv) return mv[1] + E1V[key];                                     // давати – даю, вставати – встаю
+    if(/(а|я)ти$/.test(lem)) return s1 + E1V[key];
+    if(/ити$/.test(lem)){
+      var st = lem.slice(0, -3), lab = /[бпвмф]$/.test(st), hush = HUSH.indexOf(lastCh(st)) > -1;
+      if(key === "ya") return st + (hush ? "у" : lab ? "лю" : "ю");
+      if(key === "vony") return st + (lab ? "лять" : hush ? "ать" : "ять");
+      return st + {ty:"иш", vin:"ить", my:"имо", vy:"ите"}[key];
+    }
+    return null;
+  }
+  // imperative = the second person: люби (ти), любіть (ви)
+  function impUk(w, a, key){
+    var lem = a.lem, m = /^(.+?)ти$/.exec(lem);
+    if(!m) return [];
+    var ix = key === "ity" ? 0 : 2, vi = verbInfo(lem), s1 = m[1];
+    if(vi.imp) return [vi.imp[ix]];
+    if(/ити$/.test(lem)) return [lem.slice(0, -3) + ["и", "імо", "іть"][ix]];
+    var cp = a.main && w.pres ? norm(w.pres) : null, ir = irrOf(norm(lem)), ps = cp || (ir && ir.pres) || null;
+    if(!ps && vi.pres) ps = vi.pres[0].replace(/(лю|ю|у)$/, "");                      // пишу -> пиш -> пиши
+    if(ps && /[^аеєиіїоуюя']$/.test(ps)) return [ps + ["и", "імо", "іть"][ix]];
+    var mu = /^(.+(?:ув|юв))ати$/.exec(lem);
+    if(mu) return [mu[1].slice(0, -1) + ["й", "ймо", "йте"][ix]];
+    if(/(а|я)ти$/.test(lem)) return [s1 + ["й", "ймо", "йте"][ix]];
+    return [];
+  }
+  // future: perfective = its non-past form (піду); imperfective = любитиму and буду любити
+  function futUk(w, a, i){
+    var lem = a.lem, vi = verbInfo(lem);
+    if(a.pf){ var f = conjA(w, a, PERS[i]); return f ? [f] : []; }
+    if(vi.fut) return [vi.fut[i]];
+    var b = norm(lem) === "іти" ? "йти" : lem;                                   // буду йти, йтиму
+    return /ти$/.test(lem) ? [b + FUT_SUF[i], FUT_BE[i] + " " + b] : [];
+  }
+  // conditional: past + б / би
+  function condUk(w, a, key){
+    var p = conjA(w, a, key);
+    if(!p) return [];
+    return /[аеєиіїоуюя]$/.test(p) ? [p + " б", p + " би"] : [p + " би", p + " б"];
+  }
+  // sitonian pieces
+  function sForm(w, key){ var e = ev(endings[key]); return e === null ? null : siStem(w.si, endings.inf) + e; }
+  function wrapWord(wk, pk, form){
+    var wd = (endings[wk] || "").trim();
+    if(!wd) return null;
+    return endings[pk] === "after" ? form + " " + wd : wd + " " + form;
+  }
+ 
+  function addVerb(w, addKey){
+    aspects(w).forEach(function(a){
+      var asp = a.pf ? "pf" : "ipf", lem = norm(a.lem), m = /^([^ ]+?)(ти|ть)$/.exec(lem);
+      if(!m) return;
+      if(!a.main) addKey(a.lem, w.si, true, "inf", asp);                     // the other aspect is the same word
+      PERS.forEach(function(k, i){
+        var pres = sForm(w, k);
+        if(pres === null) return;
+        if(!a.pf){ var u = conjA(w, a, k); if(u) addKey(u, pres, true, k, asp); }
+        var fw = wrapWord("futword", "futpos", pres);
+        if(fw) futUk(w, a, i).forEach(function(x){ addKey(x, fw, true, FUT_KEYS[i], asp); });
+      });
+      PAST_KEYS.forEach(function(k){
+        var past = sForm(w, k);
+        if(past === null) return;
+        var u = conjA(w, a, k);
+        if(u) addKey(u, past, true, k, asp);
+        var cw = wrapWord("condword", "condpos", past);
+        if(cw) condUk(w, a, k).forEach(function(x){ addKey(x, cw, true, "c" + k[1], asp); });
+      });
+      [["ity", "ty"], ["ivy", "vy"]].forEach(function(p){
+        var f = sForm(w, p[1]);
+        if(f !== null) impUk(w, a, p[0]).forEach(function(x){ addKey(x, f, true, p[0], asp); });
+      });
+      // loose recognition: stems + the usual endings (forms the rules above do not produce)
+      var s1 = m[1], s0 = s1.replace(/[аеєиіїоуюя]$/, ""), base = [s1, s0], ir = irrOf(lem);
+      if(/(ув|юв)а$/.test(s1)) base.push(s1.slice(0, -2));
+      var cp = a.main && w.pres ? [norm(w.pres)] : null, cs = a.main && w.past ? [norm(w.past)] : null;
+      var autoP = ir ? [ir.pres] : [], autoQ = ir ? [ir.past].concat(ir.pastAlt ? [ir.pastAlt] : []) : [];
+      var presS = cp || base.concat(autoP), pastS = cs || base.concat(autoQ), custP = cp || autoP, custQ = cs || autoQ;
+      VERB_ROWS.forEach(function(r){
+        if(!r.uk.length) return;
+        var isPast = /^p[mfnp]$/.test(r.k), si = sForm(w, r.k), c = r.k;
+        if(si === null) return;
+        if(!isPast && a.pf){
+          var fw2 = wrapWord("futword", "futpos", si);
+          if(!fw2) return;
+          si = fw2; c = FUT_KEYS[PERS_IDX[r.k]];
+        }
+        var cust = isPast ? custQ : custP;
+        r.uk.concat(r.k === "pm" ? ["ов"] : []).forEach(function(ue){
+          (isPast ? pastS : presS).forEach(function(st){
+            var isCust = cust.indexOf(st) > -1;
+            if(ue === "ов" && !isCust) return;
+            if(st.length >= (isCust ? 1 : 2)) addKey(st + ue, si, false, c, asp);
+          });
         });
+      });
+    });
+  }
+  function verbReverse(w, rreg){
+    aspects(w).forEach(function(a){
+      if(a.alt) return;
+      var asp = a.pf ? "pf" : "ipf";
+      if(!a.main) rreg(w.si, a.lem, "inf", "verb", w, true, asp);
+      PERS.forEach(function(k, i){
+        var pres = sForm(w, k);
+        if(pres === null) return;
+        if(!a.pf){ var u = conjA(w, a, k); if(u) rreg(pres, u, k, "verb", w, true, asp); }
+        var fw = wrapWord("futword", "futpos", pres);
+        if(fw){
+          var fu = futUk(w, a, i), pick = (!a.pf && endings.fstyle === "an" && fu.length > 1) ? fu[1] : fu[0];
+          if(pick) rreg(fw, pick, FUT_KEYS[i], "verb", w, true, asp);
+        }
+      });
+      PAST_KEYS.forEach(function(k){
+        var past = sForm(w, k);
+        if(past === null) return;
+        var u = conjA(w, a, k);
+        if(u) rreg(past, u, k, "verb", w, true, asp);
+        var cw = wrapWord("condword", "condpos", past), cu = condUk(w, a, k)[0];
+        if(cw && cu) rreg(cw, cu, "c" + k[1], "verb", w, true, asp);
+      });
+      [["ity", "ty"], ["ivy", "vy"]].forEach(function(p){
+        var f = sForm(w, p[1]), u = impUk(w, a, p[0])[0];
+        if(f !== null && u) rreg(f, u, p[0], "verb", w, true, asp);
       });
     });
   }
@@ -412,10 +715,10 @@ var FIREBASE_CONFIG = {
   cc("над під перед між поруч", [["i",4]]);
   cc("з із зі", [["i",3],["g",2]]);
   cc("за", [["i",3],["a",3]]);
-  cc("в у на при о", [["l",3],["a",2]]);
-  var VNUM = {ya:"s", ty:"s", vin:"s", my:"p", vy:"p", vony:"p", pm:"s", pf:"s", pn:"s", pp:"p"};
-  function numOf(x){ return x.k === "verb" ? (VNUM[x.c] || "") : (x.c ? x.c[1] : ""); }
-  function caseOf(x){ return x.k === "verb" || !x.c ? "" : x.c[0]; }
+  cc("в у на при о", [["g",3],["a",2]]);
+  var VNUM = {ya:"s", ty:"s", vin:"s", my:"p", vy:"p", vony:"p", pm:"s", pf:"s", pn:"s", pp:"p", fya:"s", fty:"s", fvin:"s", fmy:"p", fvy:"p", fvony:"p", ity:"s", imy:"p", ivy:"p", cm:"s", cf:"s", cn:"s", cp:"p"};
+  function numOf(x){ return x.k === "verb" ? (VNUM[x.c] || "") : x.k === "adv" ? "" : (x.c ? x.c[1] : ""); }
+  function caseOf(x){ return x.k === "verb" || x.k === "adv" || !x.c ? "" : x.c[0]; }
  
   // ---- sentence analysis: syntactic role -> case and number ----
   var BYNUM = Object.assign(Object.create(null), {"є":"", "був":"s", "була":"s", "було":"s", "були":"p", "буде":"s", "будуть":"p", "буду":"s", "будеш":"s", "будемо":"p", "будете":"p"});
@@ -483,6 +786,10 @@ var FIREBASE_CONFIG = {
     for(var d = -2; d <= 2; d++){
       var q = W[p + d];
       if(!d || !q || q.sent !== me.sent) continue;
+      // a comma or other punctuation between the two words cuts the link between them
+      var blocked = false;
+      for(var j = d < 0 ? p + d + 1 : p + 1; j <= (d < 0 ? p : p + d); j++){ if(W[j] && W[j].brk) blocked = true; }
+      if(blocked) continue;
       var f = Math.abs(d) === 1 ? 1 : 0.5, w = q.t;
       if(d < 0){
         if(PL[w]){ cu.n.p += 4 * f; cu.why.push("«" + w + "» вказує на множину"); }
@@ -512,7 +819,7 @@ var FIREBASE_CONFIG = {
     if(c){
       var nn = numOf(x), cs = caseOf(x);
       sc += (nn ? cu.n[nn] || 0 : 0) + (cs ? cu.c[cs] || 0 : 0);
-      if(x.k === "verb") sc += cu.v[c] || 0;
+      if(x.k === "verb") sc += cu.v[c] || cu.v[c.replace(/^f/, "")] || 0;
     }
     return sc;
   }
@@ -569,25 +876,31 @@ var FIREBASE_CONFIG = {
   }
   function guessWord(u, W, p){
     var list = [];
-    words.forEach(function(w){
+    ALL.forEach(function(w){
       var k = kindOf(w), lem = norm(w.uk[0] || "");
       if(!lem || lem.indexOf(" ") > -1) return;
       if(k === "verb"){
-        var m = /^([^ ]+?)(ти|ть)$/.exec(lem);
-        if(!m) return;
-        var s1 = m[1], s0 = s1.replace(/[аеєиіїоуюя]$/, ""), base = [s1, s0], ir = irrOf(lem);
-        if(/(ув|юв)а$/.test(s1)) base.push(s1.slice(0, -2));
-        var pres = w.pres ? [norm(w.pres)] : ir ? [ir.pres].concat(base) : base;
-        var past = w.past ? [norm(w.past)] : ir ? [ir.past].concat(base) : base;
-        var stemSi = siStem(w.si, endings.inf);
-        VERB_ROWS.forEach(function(r){
-          var e = ev(endings[r.k]);
-          if(e === null || !r.uk.length) return;
-          var isPast = /^p[mfnp]$/.test(r.k);
-          r.uk.forEach(function(ue){
-            if(u.length - ue.length < 2 || u.slice(-ue.length) !== ue) return;
-            var q = fuzzyQ(u.slice(0, -ue.length), isPast ? past : pres);
-            if(q) list.push({si: stemSi + e, c: r.k, k: "verb", q: q});
+        aspects(w).forEach(function(a){
+          var l2 = norm(a.lem), m = /^([^ ]+?)(ти|ть)$/.exec(l2);
+          if(!m) return;
+          var s1 = m[1], s0 = s1.replace(/[аеєиіїоуюя]$/, ""), base = [s1, s0], ir = irrOf(l2);
+          if(/(ув|юв)а$/.test(s1)) base.push(s1.slice(0, -2));
+          var cp = a.main && w.pres ? [norm(w.pres)] : null, cs = a.main && w.past ? [norm(w.past)] : null;
+          var pres = cp || (ir ? [ir.pres].concat(base) : base), past = cs || (ir ? [ir.past].concat(base) : base);
+          VERB_ROWS.forEach(function(r){
+            if(!r.uk.length) return;
+            var isPast = /^p[mfnp]$/.test(r.k), si = sForm(w, r.k), c = r.k;
+            if(si === null) return;
+            if(!isPast && a.pf){
+              var fw = wrapWord("futword", "futpos", si);
+              if(!fw) return;
+              si = fw; c = FUT_KEYS[PERS_IDX[r.k]];
+            }
+            r.uk.forEach(function(ue){
+              if(u.length - ue.length < 2 || u.slice(-ue.length) !== ue) return;
+              var q = fuzzyQ(u.slice(0, -ue.length), isPast ? past : pres);
+              if(q) list.push({si: si, c: c, k: "verb", q: q, asp: a.pf ? "pf" : "ipf", w: w});
+            });
           });
         });
       } else if(k === "noun" || k === "adj"){
@@ -599,7 +912,7 @@ var FIREBASE_CONFIG = {
           (UK_END[k][ck.k] || []).forEach(function(ue){
             if(!ue || u.length - ue.length < 2 || u.slice(-ue.length) !== ue) return;
             var q = fuzzyQ(u.slice(0, -ue.length), stems);
-            if(q) list.push({si: stemS + e, c: ck.k, k: k, q: q});
+            if(q) list.push({si: stemS + e, c: ck.k, k: k, q: q, w: w});
           });
         });
       }
@@ -749,6 +1062,96 @@ var FIREBASE_CONFIG = {
                      : pick({n: st + (h ? "і" : "и"), g: st + "ів", d: st + "ам", a: st + (h ? "і" : "и"), i: st + "ами", l: st + "ах", v: st + (h ? "і" : "и")});
   }
  
+  /* ---------- adjectives: degrees of comparison and adverbs ---------- */
+  /* cmp = root of the comparative, adv = adverb, cadv = comparative adverb (regular: гарн -> гарніший, гарно, гарніше) */
+  var ADJ_DB = (function(src){
+    var o = Object.create(null);
+    Object.keys(src).forEach(function(k){ o[k] = src[k]; });
+    return o;
+  })({
+    "добрий":{cmp:"кращ", adv:"добре", cadv:"краще"}, "поганий":{cmp:"гірш", adv:"погано", cadv:"гірше"},
+    "великий":{cmp:"більш", adv:"велико", cadv:"більше"}, "малий":{cmp:"менш", adv:"мало", cadv:"менше"},
+    "високий":{cmp:"вищ", adv:"високо", cadv:"вище"}, "низький":{cmp:"нижч", adv:"низько", cadv:"нижче"},
+    "близький":{cmp:"ближч", adv:"близько", cadv:"ближче"}, "далекий":{cmp:"дальш", adv:"далеко", cadv:"далі"},
+    "легкий":{cmp:"легш", adv:"легко", cadv:"легше"}, "тонкий":{cmp:"тонш", adv:"тонко", cadv:"тонше"},
+    "вузький":{cmp:"вужч", adv:"вузько", cadv:"вужче"}, "широкий":{cmp:"ширш", adv:"широко", cadv:"ширше"},
+    "глибокий":{cmp:"глибш", adv:"глибоко", cadv:"глибше"}, "короткий":{cmp:"коротш", adv:"коротко", cadv:"коротше"},
+    "довгий":{cmp:"довш", adv:"довго", cadv:"довше"}, "дорогий":{cmp:"дорожч", adv:"дорого", cadv:"дорожче"},
+    "старий":{cmp:"старш", adv:"старо", cadv:"старше"}, "молодий":{cmp:"молодш", adv:"молодо", cadv:"молодше"},
+    "швидкий":{cmp:"швидш", adv:"швидко", cadv:"швидше"}, "гарячий":{adv:"гаряче", cadv:"гарячіше"},
+    "ранній":{cmp:"ранніш", adv:"рано", cadv:"раніше"}, "пізній":{cmp:"пізніш", adv:"пізно", cadv:"пізніше"},
+    "частий":{cmp:"частіш", adv:"часто", cadv:"частіше"}, "рідкий":{cmp:"рідш", adv:"рідко", cadv:"рідше"},
+    "міцний":{adv:"міцно"}, "чистий":{adv:"чисто"}, "тихий":{adv:"тихо", cadv:"тихіше"}, "гучний":{adv:"гучно"}
+  });
+  function ukForms(lemma, ck){
+    var r = [];
+    ["m", "f", "n"].forEach(function(g){ var f = inflAdj(lemma, ck, g); if(r.indexOf(f) < 0) r.push(f); });
+    return r;
+  }
+  /* derived words: from one word (добро) an adjective (добрий) and an adverb (добре) are made with the shared endings */
+  var ALL = [];
+  function stemOf(w){
+    var k = kindOf(w);
+    if(k === "noun" || k === "adj") return siStem(w.si, w.nom);
+    if(k === "adv") return siStem(w.si, endings.advend);
+    return w.si;
+  }
+  function expandWords(){
+    var out = words.slice(), an = ev(endings.adjnom), ae = ev(endings.advend);
+    words.forEach(function(w){
+      var k = kindOf(w), st = stemOf(w);
+      if(w.dadj && an !== null && k !== "adj" && k !== "verb" && k !== "adv" && k !== "pron")
+        out.push({id: w.id + "~adj", si: st + an, uk: [disp(w.dadj)], kind: "adj", nom: an, cmpuk: w.dadjc || "", forms: [], parent: w, gender: "", obl: "", plu: "", pf: "", pfi: ""});
+      if(w.dadv && k !== "verb" && k !== "adv" && k !== "pron")
+        out.push({id: w.id + "~adv", si: st + (ae === null ? "" : ae), uk: [disp(w.dadv)], kind: "adv", nom: "", cmpuk: w.dadvc || "", forms: [], parent: w, gender: "", obl: "", plu: "", pf: "", pfi: ""});
+    });
+    return out;
+  }
+  // adverbs: добре – краще – найкраще (the comparative comes from the field, the list of adjectives, or the regular -іше)
+  var ADV_DB = Object.create(null);
+  Object.keys(ADJ_DB).forEach(function(k){ var b = ADJ_DB[k]; if(b.adv && b.cadv) ADV_DB[norm(b.adv)] = {cadv: b.cadv}; });
+  function advExtras(w){
+    var out = [], lem = disp(w.uk[0] || "");
+    if(!/[ое]$/.test(lem)) return out;
+    var ci = ev(endings.adjcmp), sp = ev(endings.adjsup), ae = ev(endings.advend);
+    if(ci === null) return out;
+    var cadv = w.cmpuk ? disp(w.cmpuk) : ((ADV_DB[norm(lem)] || {}).cadv || lem.replace(/[ое]$/, "") + "іше");
+    var stemSi = siStem(w.si, endings.advend), end = ae === null ? "" : ae;
+    out.push({si: stemSi + ci + end, uk: [cadv], lemma: cadv, c: "c", k: "adv"});
+    if(sp !== null) out.push({si: sp + stemSi + ci + end, uk: ["най" + cadv], lemma: "най" + cadv, c: "s", k: "adv"});
+    return out;
+  }
+  // forms of an adjective beyond the plain one: comparative, superlative, adverbs. Each: {si, uk: [forms], lemma, c, k}
+  function adjExtras(w){
+    var out = [], lem = disp(w.uk[0] || ""), m = /^(.+?)(ий|ій)$/.exec(lem);
+    if(!m) return out;
+    var b = ADJ_DB[norm(lem)] || {}, stem = m[1], hard = m[2] === "ий";
+    var stemSi = siStem(w.si, w.nom), nom = w.nom || "";
+    var ci = ev(endings.adjcmp), sp = ev(endings.adjsup), ae = ev(endings.advend);
+    var cmpStem = w.cmpuk ? disp(w.cmpuk).replace(/(ий|ій)$/, "") : (b.cmp || stem + "іш");
+    function addAdj(lemma, c3, pre, infix){
+      CKEYS.forEach(function(ck){
+        var e = ck.k === "ns" ? nom : dend("adj", ck.k);
+        if(e === null) return;
+        out.push({si: pre + stemSi + infix + e, uk: ukForms(lemma, ck.k), lemma: lemma, c: ck.k + c3, k: "adj"});
+      });
+    }
+    if(ci !== null){
+      addAdj(cmpStem + "ий", "c", "", ci);
+      if(sp !== null) addAdj("най" + cmpStem + "ий", "s", sp, ci);
+    }
+    if(ae !== null){
+      var adv = b.adv || (hard ? stem + "о" : "");
+      if(adv) out.push({si: stemSi + ae, uk: [adv], lemma: adv, c: "", k: "adv"});
+      if(ci !== null){
+        var cadv = b.cadv || cmpStem + "е";
+        out.push({si: stemSi + ci + ae, uk: [cadv], lemma: cadv, c: "c", k: "adv"});
+        if(sp !== null) out.push({si: sp + stemSi + ci + ae, uk: ["най" + cadv], lemma: "най" + cadv, c: "s", k: "adv"});
+      }
+    }
+    return out;
+  }
+ 
   var ADJ_H = {p:{n:"і",g:"их",d:"им",a:"і",i:"ими",l:"их",v:"і"}, m:{n:"ий",g:"ого",d:"ому",a:"ий",i:"им",l:"ому",v:"ий"},
                f:{n:"а",g:"ої",d:"ій",a:"у",i:"ою",l:"ій",v:"а"}, n:{n:"е",g:"ого",d:"ому",a:"е",i:"им",l:"ому",v:"е"}};
   var ADJ_S = {p:{n:"і",g:"іх",d:"ім",a:"і",i:"іми",l:"іх",v:"і"}, m:{n:"ій",g:"ього",d:"ьому",a:"ій",i:"ім",l:"ьому",v:"ій"},
@@ -763,36 +1166,15 @@ var FIREBASE_CONFIG = {
   var E1V = {ya:"ю", ty:"єш", vin:"є", my:"ємо", vy:"єте", vony:"ють"};
   function irrOf(n){
     var mj = /^(.+)йти$/.exec(n);
-    if(n === "іти" || n === "йти") return {pres: "ід", past: "йш"};
-    if(n === "піти") return {pres: "під", past: "піш"};
-    if(mj) return {pres: mj[1] + "йд", past: mj[1] + "йш"};
+    if(n === "іти" || n === "йти") return {pres: "ід", past: "йш", pastAlt: "іш"};
+    if(n === "піти") return {pres: "під", past: "піш", pf: 1};
+    if(mj) return {pres: mj[1] + "йд", past: mj[1] + "йш", pf: 1};
     return null;
   }
-  function conj(w, lem, key){
-    var m = /^(.+?)ти$/.exec(lem);
-    if(!m) return null;
-    var s1 = m[1], ir = irrOf(lem);
-    var pres = w.pres ? norm(w.pres) : ir ? ir.pres : null, past = w.past ? norm(w.past) : ir ? ir.past : null;
-    if(/^p[mfnp]$/.test(key)){
-      if(key === "pm") return past ? past + "ов" : s1 + "в";
-      return (past || s1) + (key === "pf" ? "ла" : key === "pn" ? "ло" : "ли");
-    }
-    if(pres) return pres + (/[аеєиіїоуюя]$/.test(pres) ? E1V : E1C)[key];
-    var mu = /^(.+(?:ув|юв))ати$/.exec(lem);
-    if(mu) return mu[1].slice(0, -1) + E1V[key];
-    if(/(а|я)ти$/.test(lem)) return s1 + E1V[key];
-    if(/ити$/.test(lem)){
-      var st = lem.slice(0, -3), lab = /[бпвмф]$/.test(st), hush = HUSH.indexOf(lastCh(st)) > -1;
-      if(key === "ya") return st + (hush ? "у" : lab ? "лю" : "ю");
-      if(key === "vony") return st + (lab ? "лять" : hush ? "ать" : "ять");
-      return st + {ty:"иш", vin:"ить", my:"имо", vy:"ите"}[key];
-    }
-    return null;
-  }
- 
   var cand = Object.create(null), ridx = Object.create(null), maxSi = 1;
  
   function rebuild(){
+    ALL = expandWords();
     idx = [Object.create(null), Object.create(null), Object.create(null)]; maxLen = 1;
     cand = Object.create(null); ridx = Object.create(null); maxSi = 1;
     function addKey(u, si, exactOnly){
@@ -805,56 +1187,56 @@ var FIREBASE_CONFIG = {
       }
       maxLen = Math.max(maxLen, parts.length);
     }
-    function reg(u, si, c, k){
+    function reg(u, si, c, k, asp, w){
       var key = norm(u), l = cand[key] || (cand[key] = []);
-      if(!l.some(function(x){ return x.si === si && x.c === (c || ""); })) l.push({si: si, c: c || "", k: k || ""});
+      if(!l.some(function(x){ return x.si === si && x.c === (c || "") && x.asp === (asp || "") && x.w === w; })) l.push({si: si, c: c || "", k: k || "", asp: asp || "", w: w});
     }
-    function rreg(si, uk, c, k, w, fin){
+    function rreg(si, uk, c, k, w, fin, asp){
       var key = norm(si), l = ridx[key] || (ridx[key] = []);
-      if(!l.some(function(x){ return x.uk === uk && x.c === (c || ""); })) l.push({uk: uk, c: c || "", k: k || "", w: w, fin: !!fin});
+      if(!l.some(function(x){ return x.uk === uk && x.c === (c || "") && x.asp === (asp || ""); })) l.push({uk: uk, c: c || "", k: k || "", w: w, fin: !!fin, asp: asp || ""});
       maxSi = Math.max(maxSi, key.split(" ").length);
     }
     var reserved = Object.create(null);
-    words.forEach(function(w){
+    ALL.forEach(function(w){
       w.uk.forEach(function(u){ reserved[norm(u)] = 1; });
       (w.forms || []).forEach(function(f){ reserved[norm(f.uk)] = 1; });
     });
-    function gen(u, si, exactOnly, c, k){
+    function gen(u, si, exactOnly, c, k, asp, w){
       if(reserved[norm(u)]) return;
-      addKey(u, si, exactOnly); reg(u, si, c, k);
+      addKey(u, si, exactOnly); reg(u, si, c, k, asp, w);
     }
     // 1. extra forms typed by the user
-    words.forEach(function(w){
+    ALL.forEach(function(w){
       (w.forms || []).forEach(function(f){
         var si = formSi(w, f);
-        addKey(f.uk, si); reg(f.uk, si, f.c, kindOf(w));
+        addKey(f.uk, si); reg(f.uk, si, f.c, kindOf(w), "", w);
         if(si !== w.si) rreg(si, f.uk, f.c, kindOf(w), w, true);
       });
     });
     // 2. forms built from the shared endings
-    words.forEach(function(w){
+    ALL.forEach(function(w){
       var k = kindOf(w);
-      if(k === "verb") addVerb(w, function(u, si, ex, c){ gen(u, si, ex, c, "verb"); });
-      else if(k === "noun" || k === "adj") addDecl(w, k, function(u, si, c){ gen(u, si, true, c, k); });
+      if(k === "verb") addVerb(w, function(u, si, ex, c, asp){ gen(u, si, ex, c, "verb", asp, w); });
+      else if(k === "noun" || k === "adj") addDecl(w, k, function(u, si, c){ gen(u, si, true, c, k, "", w); });
+      if(k === "adj") adjExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
+      if(k === "adv") advExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
     });
     // 3. the words themselves
-    words.forEach(function(w){
+    ALL.forEach(function(w){
       var k = kindOf(w), nomC = (k === "noun" || k === "adj" || k === "pron") ? "ns" : "";
-      w.uk.forEach(function(u){ addKey(u, w.si); reg(u, w.si, nomC, k); });
-      if(w.uk.length) rreg(w.si, disp(w.uk[0]), nomC, k, w);
+      var asp0 = "";
+      if(k === "verb"){ var as0 = aspects(w); asp0 = as0.length && as0[0].pf ? "pf" : "ipf"; }
+      w.uk.forEach(function(u){ addKey(u, w.si); reg(u, w.si, nomC, k, asp0, w); });
+      if(w.uk.length) rreg(w.si, disp(w.uk[0]), nomC, k, w, false, asp0);
     });
     // 4. reverse direction: sitonian forms -> ukrainian forms
-    words.forEach(function(w){
+    ALL.forEach(function(w){
       var k = kindOf(w), lem = disp(w.uk[0] || "");
       if(!lem || lem.indexOf(" ") > -1) return;
       if(k === "verb"){
-        var stemSi = siStem(w.si, endings.inf);
-        VERB_ROWS.forEach(function(r){
-          var e = ev(endings[r.k]);
-          if(e === null || r.k === "inf") return;
-          var f = conj(w, lem, r.k);
-          if(f) rreg(stemSi + e, f, r.k, "verb", w, true);
-        });
+        verbReverse(w, rreg);
+      } else if(k === "adv"){
+        advExtras(w).forEach(function(x){ rreg(x.si, x.lemma, x.c, x.k, w, true); });
       } else if(k === "noun" || k === "adj"){
         var st = siStem(w.si, w.nom);
         CKEYS.forEach(function(ck){
@@ -864,6 +1246,7 @@ var FIREBASE_CONFIG = {
           var f = k === "noun" ? (function(){ var ni = nounInfo(w); return inflNoun(lem, ck.k, ni.gender, ni.obl, ni.plu, ni); })() : lem;
           if(f) rreg(st + e, f, ck.k, k, w, k === "noun");
         });
+        if(k === "adj") adjExtras(w).forEach(function(x){ rreg(x.si, x.lemma, x.c, x.k, w, x.k === "adv"); });
       }
     });
   }
@@ -883,9 +1266,12 @@ var FIREBASE_CONFIG = {
     if(!si) return si;
     var letters = src.replace(/[^\p{L}]/gu, "");
     if(letters.length > 1 && letters === letters.toUpperCase()) return si.toUpperCase();
-    var first = src.charAt(0);
-    if(first !== first.toLowerCase()) return si.charAt(0).toUpperCase() + si.slice(1);
-    return si.charAt(0).toLowerCase() + si.slice(1);
+    var first = src.charAt(0), cap = first !== first.toLowerCase();
+    // every word of a phrase (буду робити -> well doie) follows the case of the source, whatever the dictionary has
+    return si.split(" ").map(function(w, i){
+      if(!w) return w;
+      return (cap && i === 0 ? w.charAt(0).toUpperCase() : w.charAt(0).toLowerCase()) + w.slice(1);
+    }).join(" ");
   }
   function esc(s){
     return s.replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; });
@@ -896,10 +1282,16 @@ var FIREBASE_CONFIG = {
   var popData = [], overrides = Object.create(null);
   var CN = {n:"називний", g:"родовий", d:"давальний", a:"знахідний", i:"орудний", l:"місцевий", v:"кличний"};
   var VN = {inf:"інфінітив", ya:"я", ty:"ти", vin:"він, вона, воно", my:"ми", vy:"ви", vony:"вони",
-            pm:"минулий, чол. рід", pf:"минулий, жін. рід", pn:"минулий, сер. рід", pp:"минулий, множина"};
+            pm:"минулий, чол. рід", pf:"минулий, жін. рід", pn:"минулий, сер. рід", pp:"минулий, множина",
+            fya:"майбутній, я", fty:"майбутній, ти", fvin:"майбутній, він/вона/воно", fmy:"майбутній, ми", fvy:"майбутній, ви", fvony:"майбутній, вони",
+            ity:"наказовий, ти", imy:"наказовий, ми", ivy:"наказовий, ви", cm:"умовний, чол. рід", cf:"умовний, жін. рід", cn:"умовний, сер. рід", cp:"умовний, множина",
+            gpr:"дієприслівник теперішнього часу", gpa:"дієприслівник минулого часу"};
+  var DEG = {c: "вищий ступінь", s: "найвищий ступінь", a: "дієприкметник активний", p: "дієприкметник пасивний"};
   function labelOf(x){
+    if(x.k === "adv") return "прислівник" + (DEG[x.c] ? ", " + DEG[x.c] : "");
+    if(x.k === "adj" && x.c && x.c.length === 3) return (CN[x.c[0]] || "") + ", " + (x.c[1] === "s" ? "одн." : "множ.") + " · " + (DEG[x.c[2]] || "");
     if(!x.c) return "основна форма";
-    if(x.k === "verb") return VN[x.c] || x.c;
+    if(x.k === "verb") return (VN[x.c] || x.c) + (x.asp ? ", " + (x.asp === "pf" ? "доконаний" : "недоконаний") + " вид" : "");
     return (CN[x.c[0]] || "") + ", " + (x.c[1] === "s" ? "одн." : "множ.");
   }
   // one entry per distinct output text; labels of equal outputs are merged
@@ -907,13 +1299,16 @@ var FIREBASE_CONFIG = {
     var map = Object.create(null), arr = [];
     list.forEach(function(c){
       var t = textOf(c), g = map[t];
-      if(!g){ g = map[t] = {text: matchCase(t, src), id: t, labels: [], on: false}; arr.push(g); }
+      if(!g){ g = map[t] = {text: matchCase(t, src), id: t, labels: [], on: false, ws: []}; arr.push(g); }
       var l = labelOf(c);
       if(g.labels.indexOf(l) < 0) g.labels.push(l);
+      if(c.w && g.ws.indexOf(c.w) < 0) g.ws.push(c.w);
       if(c === x) g.on = true;
     });
-    return arr.map(function(g){ return {text: g.text, id: g.id, label: g.labels.join(" · "), on: g.on}; });
+    return arr.map(function(g){ return {text: g.text, id: g.id, label: g.labels.join(" · "), on: g.on, from: g.ws.map(fromText).join("; ")}; });
   }
+  // the dictionary entry a form comes from
+  function fromText(w){ return w.si + " — " + w.uk.join(", ") + (w.parent ? " (від слова " + w.parent.si + ")" : ""); }
   function ctxKey(W, p, prefix){
     var a = W[p - 1], b = W[p + 1];
     return prefix + (a ? a.s : "") + "|" + W[p].s + "|" + (b ? b.s : "");
@@ -922,8 +1317,9 @@ var FIREBASE_CONFIG = {
   function spanOf(info, src, text, cls){
     popData.push(info);
     if(info.amb) ambN++;
+    var on = info.alts.filter(function(a){ return a.on; })[0] || info.alts[0], from = on && on.from;
     return '<span class="si pick' + (cls ? " " + cls : "") + '" role="button" tabindex="0" data-a="' + (popData.length - 1) +
-           '" title="' + esc(info.amb ? "Можливо кілька варіантів: клікніть, щоб обрати" : src) + '">' + esc(text) + '</span>';
+           '" title="' + esc(info.amb ? "Можливо кілька варіантів: клікніть, щоб обрати" : from ? src + " ← слово словника: " + from : src) + '">' + esc(text) + '</span>';
   }
   function openPop(i){
     var d = popData[i], box = $("pop");
@@ -935,10 +1331,11 @@ var FIREBASE_CONFIG = {
     else if(d.alts.length > 1) h += '<p class="note" style="margin:6px 0">У реченні немає підказок щодо числа чи відмінка цього слова.</p>';
     if(d.alts.length > 1){
       h += '<p class="note" style="margin:6px 0">' + (d.amb ? "Оберіть потрібний варіант:" : "Можна обрати інший варіант:") + '</p>' + d.alts.map(function(a, j){
-        return '<button class="alt' + (a.on ? ' on' : '') + '" data-i="' + i + '" data-j="' + j + '">' + esc(a.text) + ' <span class="note">' + esc(a.label) + '</span></button>';
+        return '<button class="alt' + (a.on ? ' on' : '') + '" data-i="' + i + '" data-j="' + j + '">' + esc(a.text) + ' <span class="note">' + esc(a.label) + '</span>' +
+               (a.from ? '<br><span class="note">від слова: ' + esc(a.from) + '</span>' : '') + '</button>';
       }).join("") + '<p class="note">Вибір діє, поки сторінка відкрита.</p>';
     } else {
-      h += '<p class="note" style="margin:6px 0">' + (d.alts[0] ? "Єдиний варіант: " + esc(d.alts[0].label) + "." : "Знайдено за основою слова або як словосполучення.") + '</p>';
+      h += '<p class="note" style="margin:6px 0">' + (d.alts[0] ? "Єдиний варіант: " + esc(d.alts[0].label) + "." + (d.alts[0].from ? " Походить від слова словника: " + esc(d.alts[0].from) + "." : "") : "Знайдено за основою слова або як словосполучення.") + '</p>';
     }
     box.innerHTML = h + '<button class="ghost" data-close="1">Закрити</button>';
     box.hidden = false;
@@ -988,6 +1385,10 @@ var FIREBASE_CONFIG = {
             info = {src: srcText, alts: groupAlts(cl, function(c){ return c.si; }, cl[0], srcText)};
           }
         }
+        if(found && n > 1){
+          var clp = cand[norm(srcText)];                           // a phrase such as «буду робити»
+          if(clp) info = {src: srcText, alts: groupAlts(clp, function(c){ return c.si; }, clp[0], srcText)};
+        }
         if(found && n === 1 && fl.lv > 0){
           // only matched loosely by the stem: the context may tell the exact form better
           var g0 = guessFor(srcText, Wf, posOf[i]);
@@ -1003,6 +1404,7 @@ var FIREBASE_CONFIG = {
         if(g1){
           out += spanOf(g1.info, p, g1.text, g1.amb ? "guess amb" : "guess");
         } else {
+          missNow.push(p);
           out += '<span class="unk" title="Немає в словнику">' + esc(p) + '</span>';
         }
         i++;
@@ -1042,7 +1444,7 @@ var FIREBASE_CONFIG = {
     var out = "";
     items.forEach(function(it){
       if(it.kind === "sep"){ out += esc(it.s); return; }
-      if(!it.c){ out += '<span class="unk" title="Немає в словнику">' + esc(it.s) + '</span>'; return; }
+      if(!it.c){ missNow.push(it.s); out += '<span class="unk" title="Немає в словнику">' + esc(it.s) + '</span>'; return; }
       var g = genderAround(W, it.p);
       var textOf = function(x){ return (x.k === "adj" && !x.fin) ? inflAdj(disp(x.uk), x.c || "ns", g) : x.uk; };
       var key = ctxKey(W, it.p, "s:"), ov = overrides[key], x = null, shown = null, amb = false, cu = cuesAt(W, it.p);
@@ -1061,10 +1463,102 @@ var FIREBASE_CONFIG = {
     $("result").innerHTML = text.trim() ? out : "";
   }
  
+  /* ---------- words without translation + to-do list ---------- */
+  var missNow = [], todo = [];
+  function loadTodo(){ try { todo = JSON.parse(localStorage.getItem("sitono-todo")) || []; } catch(e){ todo = []; } }
+  function saveTodo(){ try { localStorage.setItem("sitono-todo", JSON.stringify(todo)); } catch(e){} }
+  function isKnown(w, d){ return d === "uk" ? !!findLv(w) : !!ridx[norm(w)]; }
+  function renderMiss(){
+    var text = $("source").value, lw = /([\p{L}\p{N}'’ʼ-]+)$/u.exec(text), list = missNow.slice();
+    if(lw && list.length && norm(list[list.length - 1]) === norm(lw[1])) list.pop();   // the word is still being typed
+    var seen = {}, uniq = [];
+    list.forEach(function(w){ var k = norm(w); if(!seen[k]){ seen[k] = 1; uniq.push(w); } });
+    todo = todo.filter(function(t){ return !isKnown(t.w, t.d); });
+    $("missHint").textContent = uniq.length ? "У тексті немає в словнику (" + (dir === "uk" ? "українські" : "сітонські") + " слова):" : "";
+    $("missList").innerHTML = uniq.map(function(w){
+      return '<li><span><b>' + esc(w) + '</b></span><span class="acts"><button class="ghost" data-addw="' + esc(w) + '">Додати</button>' +
+             '<button class="ghost" data-later="' + esc(w) + '">Відкласти</button></span></li>';
+    }).join("");
+    $("todoWrap").hidden = !todo.length;
+    $("todoList").innerHTML = todo.map(function(t, i){
+      return '<li><span><b>' + esc(t.w) + '</b> <span class="note">(' + (t.d === "uk" ? "українське" : "сітонське") + ')</span></span>' +
+             '<span class="acts"><button class="ghost" data-todoadd="' + i + '">Додати</button><button class="ghost" data-tododel="' + i + '">Прибрати</button></span></li>';
+    }).join("");
+    $("missBox").hidden = !uniq.length && !todo.length;
+  }
+  function startAddWith(word, d){
+    openForm(true); resetForm();
+    if(d === "uk"){ $("ukInput").value = word; $("siInput").focus(); }
+    else { $("siInput").value = word; $("ukInput").focus(); }
+    $("addBox").scrollIntoView({block: "start"});
+  }
+ 
+  /* ---------- training ---------- */
+  var quiz = {dir: "si", queue: [], cur: null, ok: 0, total: 0, state: "idle"};
+  function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function buildQuiz(){
+    var pairs = [];
+    ALL.forEach(function(w){ w.uk.forEach(function(u){ pairs.push({si: w.si, uk: u, label: ""}); }); });
+    if($("qForms").checked){
+      Object.keys(ridx).forEach(function(key){
+        var l = ridx[key];
+        if(l.some(function(x){ return norm(x.w.si) === key && (x.c === "" || x.c === "ns"); })) return;   // a dictionary word itself
+        l.forEach(function(x){
+          var uk = (x.k === "adj" && !x.fin) ? inflAdj(disp(x.uk), x.c || "ns", "m") : x.uk;
+          pairs.push({si: key, uk: uk, label: labelOf(x)});
+        });
+      });
+    }
+    var m = Object.create(null), items = [];
+    pairs.forEach(function(p){
+      var prompt = quiz.dir === "si" ? p.si : p.uk, ans = quiz.dir === "si" ? p.uk : p.si, k = norm(prompt);
+      var it = m[k];
+      if(!it){ it = m[k] = {prompt: prompt, answers: [], labels: []}; items.push(it); }
+      if(it.answers.map(norm).indexOf(norm(ans)) < 0) it.answers.push(ans);
+      if(p.label && it.labels.indexOf(p.label) < 0) it.labels.push(p.label);
+    });
+    return items;
+  }
+  function quizNext(){
+    if(!quiz.queue.length) quiz.queue = shuffle(buildQuiz());
+    quiz.cur = quiz.queue.shift();
+    $("qCard").hidden = !quiz.cur;
+    if(!quiz.cur){ $("qScore").textContent = "У словнику ще немає слів для тренування."; return; }
+    quiz.state = "ask";
+    $("qWord").textContent = quiz.cur.prompt;
+    $("qHint").textContent = quiz.dir === "si" ? "Переклад українською:" : "Переклад сітонською:";
+    $("qAns").value = ""; $("qAns").disabled = false; $("qAns").focus();
+    $("qRes").textContent = ""; $("qRes").className = "msg";
+    $("qCheck").textContent = "Перевірити"; $("qSkip").hidden = false;
+  }
+  function quizScore(){ $("qScore").textContent = "Правильно: " + quiz.ok + " з " + quiz.total; }
+  function quizFinish(correct){
+    quiz.total++; if(correct) quiz.ok++;
+    var c = quiz.cur;
+    if(!correct) quiz.queue.splice(Math.min(quiz.queue.length, 2 + Math.floor(Math.random() * 4)), 0, c);   // ask the missed word again soon
+    $("qRes").className = "msg" + (correct ? " ok" : "");
+    $("qRes").textContent = (correct ? "Правильно! " : "Не зовсім. ") + "Відповідь: " + c.answers.join(" / ") + (c.labels.length ? " (" + c.labels.join("; ") + ")" : "");
+    quiz.state = "done"; $("qAns").disabled = true; $("qSkip").hidden = true; $("qCheck").textContent = "Далі";
+    quizScore();
+  }
+  function quizCheck(){
+    if(quiz.state === "done"){ quizNext(); return; }
+    if(quiz.state !== "ask" || !quiz.cur) return;
+    var a = norm($("qAns").value);
+    if(!a) return;
+    quizFinish(quiz.cur.answers.some(function(x){ return norm(x) === a; }));
+  }
+  function quizDir(d){
+    quiz.dir = d; quiz.queue = [];
+    $("qDirSi").setAttribute("aria-pressed", String(d === "si")); $("qDirUk").setAttribute("aria-pressed", String(d === "uk"));
+    if(quiz.state !== "idle") quizNext();
+  }
+ 
   var dir = "uk";
   function translate(){
-    $("pop").hidden = true; ambN = 0;
+    $("pop").hidden = true; ambN = 0; missNow = [];
     if(dir === "uk") translateFwd(); else translateRev();
+    renderMiss();
     var el = $("ambNote");
     el.hidden = ambN === 0;
     if(ambN) el.textContent = "Слів із кількома можливими варіантами: " + ambN + ". Контекст не дає змоги обрати одну форму, тому показано всі (через «/»). Клікніть на таке слово, щоб вибрати.";
@@ -1108,6 +1602,11 @@ var FIREBASE_CONFIG = {
   function setMsg(t, ok){ var m = $("msg"); m.textContent = t; m.className = "msg" + (ok ? " ok" : ""); }
  
   var editId = null;
+  // the derived-words block: not for verbs, pronouns, adverbs; an adjective only has an adverb
+  function setDerBox(kind){
+    $("derBox").hidden = kind === "verb" || kind === "pron" || kind === "adv";
+    $("dadjWrap").hidden = kind === "adj";
+  }
  
   // options of the "form" list depend on the word type: verb forms or cases
   function fillSelect(sel, kind, val){
@@ -1139,7 +1638,7 @@ var FIREBASE_CONFIG = {
     }).filter(function(f){ return f.uk; });
   }
   function resetForm(){
-    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true;
+    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("aspectSel").value = ""; $("pfiInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true; $("cmpInput").value = ""; $("cmpBox").hidden = true; ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = ""; }); setDerBox("");
     editId = null; $("saveBtn").textContent = "Зберегти";
   }
   function openForm(open){
@@ -1154,12 +1653,15 @@ var FIREBASE_CONFIG = {
     $("siInput").value = w.si;
     $("ukInput").value = w.uk.join(", ");
     $("kindSel").value = kindOf(w);
-    $("presInput").value = w.pres || ""; $("pastInput").value = w.past || "";
+    $("presInput").value = w.pres || ""; $("pastInput").value = w.past || ""; $("aspectSel").value = w.pf || ""; $("pfiInput").value = w.pfi || "";
     $("irr").hidden = kindOf(w) !== "verb";
     $("nomInput").value = w.nom || "";
     $("genderSel").value = w.gender || "";
     $("gendBox").hidden = kindOf(w) !== "noun";
-    $("oblInput").value = w.obl || ""; $("pluInput").value = w.plu || "";
+    $("oblInput").value = w.obl || ""; $("pluInput").value = w.plu || ""; $("cmpInput").value = w.cmpuk || "";
+    $("cmpBox").hidden = kindOf(w) !== "adj" && kindOf(w) !== "adv";
+    ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = w[f] || ""; });
+    setDerBox(kindOf(w));
     $("stemBox").hidden = kindOf(w) !== "noun";
     $("nomBox").hidden = ["noun","adj","pron"].indexOf(kindOf(w)) < 0;
     (w.forms || []).forEach(function(f){ formRow(f.uk, f.si, f.c); });
@@ -1172,21 +1674,25 @@ var FIREBASE_CONFIG = {
     var uk = $("ukInput").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
     var forms = readForms();
     var kind = $("kindSel").value;
-    var pres = $("presInput").value.trim(), past = $("pastInput").value.trim(), nom = $("nomInput").value.trim();
-    if(kind !== "verb"){ pres = ""; past = ""; }
+    var pres = $("presInput").value.trim(), past = $("pastInput").value.trim(), nom = $("nomInput").value.trim(), pf = $("aspectSel").value, pfi = $("pfiInput").value.trim();
+    if(kind !== "verb"){ pres = ""; past = ""; pf = ""; pfi = ""; }
     if(kind !== "noun" && kind !== "adj" && kind !== "pron") nom = "";
     var gender = kind === "noun" ? $("genderSel").value : "";
     var obl = kind === "noun" ? $("oblInput").value.trim() : "", plu = kind === "noun" ? $("pluInput").value.trim() : "";
+    var cmpuk = (kind === "adj" || kind === "adv") ? $("cmpInput").value.trim() : "";
+    var dadj = $("dadjInput").value.trim(), dadjc = $("dadjcInput").value.trim(), dadv = $("dadvInput").value.trim(), dadvc = $("dadvcInput").value.trim();
+    if(kind === "verb" || kind === "pron" || kind === "adv"){ dadj = dadjc = dadv = dadvc = ""; }
+    if(kind === "adj"){ dadj = ""; dadjc = ""; }
     if(!si || !uk.length){ setMsg("Заповніть слово і його переклад."); return; }
     var wasEdit = !!editId;
     var cur = wasEdit ? words.filter(function(w){ return w.id === editId; })[0] : null;
     if(cur){
-      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, pres: pres, past: past});
+      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, pres: pres, pf: pf, pfi: pfi, past: past});
     } else {
       var existing = words.filter(function(w){ return norm(w.si) === norm(si); })[0];
       if(existing){
         var m = {id: existing.id, t: existing.t, si: existing.si, uk: existing.uk.slice(),
-                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", pres: pres || existing.pres || "", past: past || existing.past || ""};
+                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", cmpuk: cmpuk || existing.cmpuk || "", dadj: dadj || existing.dadj || "", dadjc: dadjc || existing.dadjc || "", dadv: dadv || existing.dadv || "", dadvc: dadvc || existing.dadvc || "", pres: pres || existing.pres || "", pf: pf || existing.pf || "", pfi: pfi || existing.pfi || "", past: past || existing.past || ""};
         uk.forEach(function(u){
           if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u);
         });
@@ -1195,7 +1701,7 @@ var FIREBASE_CONFIG = {
         });
         putWord(m);
       } else {
-        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, pres: pres, past: past});
+        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, pres: pres, pf: pf, pfi: pfi, past: past});
       }
     }
     resetForm();
@@ -1219,6 +1725,8 @@ var FIREBASE_CONFIG = {
     $("nomBox").hidden = ["noun","adj","pron"].indexOf($("kindSel").value) < 0;
     $("gendBox").hidden = $("kindSel").value !== "noun";
     $("stemBox").hidden = $("kindSel").value !== "noun";
+    $("cmpBox").hidden = $("kindSel").value !== "adj" && $("kindSel").value !== "adv";
+    setDerBox($("kindSel").value);
     Array.prototype.forEach.call(document.querySelectorAll("#forms .fc"), function(sel){
       fillSelect(sel, $("kindSel").value, sel.value);
     });
@@ -1269,6 +1777,15 @@ var FIREBASE_CONFIG = {
       var el = $("end_" + r.k);
       if(document.activeElement !== el) el.value = endings[r.k] || "";
     });
+    ["adjcmp", "adjsup", "advend", "adjnom", "futword", "condword"].forEach(function(k){
+      var el = $("end_" + k);
+      if(el && document.activeElement !== el) el.value = endings[k] || "";
+    });
+    ["futpos", "condpos"].forEach(function(k){
+      var el = $("end_" + k);
+      if(el && document.activeElement !== el) el.value = endings[k] || "before";
+    });
+    if($("futStyle") && document.activeElement !== $("futStyle")) $("futStyle").value = endings.fstyle || "sy";
     CLASSES.forEach(function(cl){
       CKEYS.forEach(function(ck){
         var el = $("end_" + cl[0] + "_" + ck.k);
@@ -1295,7 +1812,7 @@ var FIREBASE_CONFIG = {
   }
   $("migBtn").onclick = function(){
     missingLocal().forEach(function(w,i){
-      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", pres: w.pres || "", past: w.past || ""});
+      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""});
     });
     var le = localEndings();
     if(hasEnd(le) && !hasEnd(endings)){ endings = le; persistEndings(); fillEnd(); }
@@ -1319,7 +1836,7 @@ var FIREBASE_CONFIG = {
       wordsCol.orderBy("t").onSnapshot(function(snap){
         words = snap.docs.map(function(x){
           var o = x.data() || {};
-          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", pres: o.pres || "", past: o.past || "", t: o.t || 0};
+          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", cmpuk: o.cmpuk || "", dadj: o.dadj || "", dadjc: o.dadjc || "", dadv: o.dadv || "", dadvc: o.dadvc || "", pres: o.pres || "", pf: o.pf || "", pfi: o.pfi || "", past: o.past || "", t: o.t || 0};
         });
         if(!snap.metadata.fromCache) loaded = true;
         refresh(); offerMigration();
@@ -1337,7 +1854,7 @@ var FIREBASE_CONFIG = {
   function ioMsg(t){ $("ioMsg").textContent = t; }
   function exportData(){
     return JSON.stringify({app: "sitono", version: 1, endings: endings, words: words.map(function(w){
-      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", nom: w.nom || "", pres: w.pres || "", past: w.past || "", forms: w.forms || []};
+      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", nom: w.nom || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", forms: w.forms || []};
     })}, null, 2);
   }
   function exportFile(){
@@ -1395,12 +1912,12 @@ var FIREBASE_CONFIG = {
         uk.forEach(function(u){ if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u); });
         m.forms = m.forms || [];
         forms.forEach(function(f){ if(m.forms.map(function(x){ return norm(x.uk); }).indexOf(norm(f.uk)) < 0) m.forms.push(f); });
-        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || "";
-        m.pres = m.pres || w.pres || ""; m.past = m.past || w.past || "";
+        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || ""; m.cmpuk = m.cmpuk || w.cmpuk || ""; m.dadj = m.dadj || w.dadj || ""; m.dadjc = m.dadjc || w.dadjc || ""; m.dadv = m.dadv || w.dadv || ""; m.dadvc = m.dadvc || w.dadvc || "";
+        m.pres = m.pres || w.pres || ""; m.pf = m.pf || w.pf || ""; m.pfi = m.pfi || w.pfi || ""; m.past = m.past || w.past || "";
         if(!touched[key]) updated++;
       } else {
         m = byKey[key] = {id: newId(), t: Date.now() + added, si: si, uk: uk, forms: forms, kind: w.kind || "", nom: w.nom || "",
-                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", pres: w.pres || "", past: w.past || ""};
+                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""};
         added++;
       }
       touched[key] = 1;
@@ -1429,6 +1946,28 @@ var FIREBASE_CONFIG = {
   $("ioGo").onclick = function(){ importText($("ioText").value); };
   $("ioClose").onclick = function(){ $("ioPaste").hidden = true; };
  
+ 
+  /* events: missing words and training */
+  $("missBox").addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest("button") : null;
+    if(!b) return;
+    var g = function(n){ return b.getAttribute(n); };
+    if(g("data-addw") !== null) startAddWith(g("data-addw"), dir);
+    else if(g("data-later") !== null){
+      var w = g("data-later");
+      if(!todo.some(function(t){ return norm(t.w) === norm(w) && t.d === dir; })) todo.push({w: w, d: dir});
+      saveTodo(); renderMiss();
+    } else if(g("data-todoadd") !== null){ var t = todo[+g("data-todoadd")]; if(t) startAddWith(t.w, t.d); }
+    else if(g("data-tododel") !== null){ todo.splice(+g("data-tododel"), 1); saveTodo(); renderMiss(); }
+  });
+  $("qStart").onclick = function(){ quiz.ok = 0; quiz.total = 0; quiz.queue = []; quiz.state = "ask"; quizScore(); quizNext(); };
+  $("qCheck").onclick = quizCheck;
+  $("qSkip").onclick = function(){ if(quiz.state === "ask") quizFinish(false); };
+  $("qAns").addEventListener("keydown", function(e){ if(e.key === "Enter") quizCheck(); });
+  $("qDirSi").onclick = function(){ quizDir("si"); };
+  $("qDirUk").onclick = function(){ quizDir("uk"); };
+  $("qForms").addEventListener("change", function(){ quiz.queue = []; if(quiz.state !== "idle") quizNext(); });
+ 
   /* ---------- pop-up events ---------- */
   function openFrom(e){
     var t = e.target.closest ? e.target.closest("[data-a]") : null;
@@ -1447,6 +1986,7 @@ var FIREBASE_CONFIG = {
     translate();
   });
  
+  loadTodo();
   load();
   loadEnd();
   fillEnd();
