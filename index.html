@@ -582,6 +582,13 @@ var FIREBASE_CONFIG = {
     });
     return out;
   }
+  // -и- class present: stem + ending (лю/ю/у for я, ишс/иш for ти, ать/ять/лять for вони)
+  function ityPres(st, key){
+    var lab = /[бпвмф]$/.test(st), hush = HUSH.indexOf(lastCh(st)) > -1;
+    if(key === "ya") return st + (hush ? "у" : lab ? "лю" : "ю");
+    if(key === "vony") return st + (lab ? "лять" : hush ? "ать" : "ять");
+    return st + {ty:"иш", vin:"ить", my:"имо", vy:"ите"}[key];
+  }
   // Ukrainian form of one verb: present (imperfective) / non-past (perfective) / past
   function conjA(w, a, key){
     var lem = a.lem, m = /^(.+?)ти$/.exec(lem);
@@ -597,18 +604,14 @@ var FIREBASE_CONFIG = {
     var ix = PERS_IDX[key];
     if(ix === undefined) return null;
     if(!cp && vi.pres) return vi.pres[ix];
+    if(cp && /ити$/.test(lem)) return ityPres(cp, key);                  // дивитися, основа див: дивлюся, дивишся, дивиться
     var pres = cp || (ir && ir.pres) || null;
     if(pres) return pres + (/[аеєиіїоуюя]$/.test(pres) ? E1V : E1C)[key];
     var mu = /^(.+(?:ув|юв))ати$/.exec(lem), mv = /^(.*(?:да|ста|зна))вати$/.exec(lem);
     if(mu) return mu[1].slice(0, -1) + E1V[key];
     if(mv) return mv[1] + E1V[key];                                     // давати – даю, вставати – встаю
     if(/(а|я)ти$/.test(lem)) return s1 + E1V[key];
-    if(/ити$/.test(lem)){
-      var st = lem.slice(0, -3), lab = /[бпвмф]$/.test(st), hush = HUSH.indexOf(lastCh(st)) > -1;
-      if(key === "ya") return st + (hush ? "у" : lab ? "лю" : "ю");
-      if(key === "vony") return st + (lab ? "лять" : hush ? "ать" : "ять");
-      return st + {ty:"иш", vin:"ить", my:"имо", vy:"ите"}[key];
-    }
+    if(/ити$/.test(lem)) return ityPres(lem.slice(0, -3), key);
     return null;
   }
   // imperative = the second person: люби (ти), любіть (ви)
@@ -648,6 +651,37 @@ var FIREBASE_CONFIG = {
     return endings[pk] === "after" ? form + " " + wd : wd + " " + form;
   }
  
+  /* ---------- reflexive verbs (-ся / -сь): the base verb plus the particle ---------- */
+  function reflOf(w){
+    if(kindOf(w) !== "verb" || !w.uk || !w.uk.length) return null;
+    var m = /^(.+?)(ся|сь)$/.exec(norm(w.uk[0]));
+    return (m && /(ти|ть)$/.test(m[1])) ? m[2] : null;
+  }
+  function reflBase(w){
+    var cut = function(u){ var n = norm(u); return /(ся|сь)$/.test(n) ? n.slice(0, -2) : n; };
+    var r = Object.assign({}, w);
+    r.uk = w.uk.map(cut);
+    if(w.pres) r.pres = cut(w.pres);
+    if(w.past) r.past = cut(w.past);
+    if(w.pfi) r.pfi = cut(w.pfi);
+    return r;
+  }
+  // every generated Ukrainian form gets the particle; both spellings (ся and сь) are accepted as input
+  // 3rd person present takes -ться (розташовує -> розташовується); the rest take -ся (розташовуєш -> розташовуєшся)
+  function reflKeys(sfx, fn){
+    var alt = sfx === "ся" ? "сь" : "ся";
+    return function(u, si, ex, c, asp){
+      var main = sfx, other = alt;
+      if(c === "vin" && !/ть$/.test(u)){ main = "ть" + sfx; other = "ть" + alt; }
+      fn(u + main, si, ex, c, asp); fn(u + other, si, ex, c, asp);
+    };
+  }
+  function reflRev(sfx, fn){
+    return function(si, uk, c, k, w, fin, asp){
+      var add = (c === "vin" && !/ть$/.test(uk)) ? "ть" + sfx : sfx;
+      fn(si, uk + add, c, k, w, fin, asp);
+    };
+  }
   function addVerb(w, addKey){
     aspects(w).forEach(function(a){
       var asp = a.pf ? "pf" : "ipf", lem = norm(a.lem), m = /^([^ ]+?)(ти|ть)$/.exec(lem);
@@ -1255,7 +1289,10 @@ var FIREBASE_CONFIG = {
     // 2. forms built from the shared endings
     ALL.forEach(function(w){
       var k = kindOf(w);
-      if(k === "verb") addVerb(w, function(u, si, ex, c, asp){ gen(u, si, ex, c, "verb", asp, w); });
+      if(k === "verb"){
+        var rs = reflOf(w), gk = function(u, si, ex, c, asp){ gen(u, si, ex, c, "verb", asp, w); };
+        if(rs) addVerb(reflBase(w), reflKeys(rs, gk)); else addVerb(w, gk);
+      }
       else if(k === "noun" || k === "adj") addDecl(w, k, function(u, si, c){ gen(u, si, true, c, k, "", w); });
       if(k === "adj") adjExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
       if(k === "adv") advExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
@@ -1264,7 +1301,7 @@ var FIREBASE_CONFIG = {
     ALL.forEach(function(w){
       var k = kindOf(w), nomC = (k === "noun" || k === "adj" || k === "pron") ? "ns" : "";
       var asp0 = "";
-      if(k === "verb"){ var as0 = aspects(w); asp0 = as0.length && as0[0].pf ? "pf" : "ipf"; }
+      if(k === "verb"){ var as0 = aspects(reflOf(w) ? reflBase(w) : w); asp0 = as0.length && as0[0].pf ? "pf" : "ipf"; }
       w.uk.forEach(function(u){ addKey(u, w.si); reg(u, w.si, nomC, k, asp0, w); });
       if(w.uk.length) rreg(w.si, disp(w.uk[0]), nomC, k, w, false, asp0);
     });
@@ -1273,7 +1310,8 @@ var FIREBASE_CONFIG = {
       var k = kindOf(w), lem = disp(w.uk[0] || "");
       if(!lem || lem.indexOf(" ") > -1) return;
       if(k === "verb"){
-        verbReverse(w, rreg);
+        var rs4 = reflOf(w);
+        if(rs4) verbReverse(reflBase(w), reflRev(rs4, rreg)); else verbReverse(w, rreg);
       } else if(k === "adv"){
         advExtras(w).forEach(function(x){ rreg(x.si, x.lemma, x.c, x.k, w, true); });
       } else if(k === "noun" || k === "adj"){
