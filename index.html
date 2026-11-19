@@ -483,6 +483,7 @@ var FIREBASE_CONFIG = {
   function formSi(w, f){
     if(f.si) return f.si;
     var k = kindOf(w);
+    if(k === "adj") return w.si;   // adjectives do not decline
     if(f.c && f.c[0] === "l") f = {uk: f.uk, si: f.si, c: "g" + f.c[1]};   // locative = genitive
     if(f.c && k === "verb"){ var ve = ev(endings[f.c]); if(ve !== null) return siStem(w.si, endings.inf) + ve; }
     if(f.c && (k === "noun" || k === "adj" || k === "pron")){
@@ -1039,7 +1040,7 @@ var FIREBASE_CONFIG = {
     var alts = groupAlts(gs.list, out, x, src);
     if(amb) alts.forEach(function(a){ a.on = false; });
     var text = amb ? dd.set.map(function(c){ return matchCase(c.si, src); }).join(" / ") : matchCase(x.si, src);
-    return {text: text, amb: amb, info: {src: src, key: key, guess: true, amb: amb, why: gs.cu.why, alts: alts}};
+    return {text: text, amb: amb, k: x.k, cl: amb ? dd.set : [x], info: {src: src, key: key, guess: true, amb: amb, why: gs.cu.why, alts: alts}};
   }
   function guessWord(u, W, p){
     var list = [];
@@ -1307,7 +1308,7 @@ var FIREBASE_CONFIG = {
     var cmpStem = w.cmpuk ? disp(w.cmpuk).replace(/(ий|ій)$/, "") : (b.cmp || stem + "іш");
     function addAdj(lemma, c3, pre, infix){
       CKEYS.forEach(function(ck){
-        var e = ck.k === "ns" ? nom : dend("adj", ck.k);
+        var e = nom;   // comparative / superlative do not decline either
         if(e === null) return;
         out.push({si: pre + stemSi + infix + e, uk: ukForms(lemma, ck.k), lemma: lemma, c: ck.k + c3, k: "adj"});
       });
@@ -1396,7 +1397,7 @@ var FIREBASE_CONFIG = {
         var rs = reflOf(w), gk = function(u, si, ex, c, asp, post){ gen(post ? post(u) : u, si, ex, c, "verb", asp, w); };
         if(rs) addVerb(reflBase(w), reflKeys(rs, gk)); else addVerb(w, gk);
       }
-      else if(k === "noun" || k === "adj") addDecl(w, k, function(u, si, c){ gen(u, si, true, c, k, "", w); });
+      else if(k === "noun" || k === "adj") addDecl(w, k, function(u, si, c){ gen(u, k === "adj" ? w.si : si, true, c, k, "", w); });   // adjectives do not decline in Sitono
       if(k === "adj") adjExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
       if(k === "adv") advExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
     });
@@ -1426,13 +1427,13 @@ var FIREBASE_CONFIG = {
       } else if(k === "noun" || k === "adj"){
         var st = siStem(w.si, w.nom);
         CKEYS.forEach(function(ck){
-          if(ck.k === "ns") return;
+          if(ck.k === "ns" || k === "adj") return;
           var e = dend(k, ck.k);
           if(e === null) return;
           var f = k === "noun" ? (function(){ var ni = nounInfo(w); return inflNoun(lem, ck.k, ni.gender, ni.obl, ni.plu, ni); })() : lem;
           if(f) rreg(st + e, f, ck.k, k, w, k === "noun");
         });
-        if(k === "adj") adjExtras(w).forEach(function(x){ rreg(x.si, x.lemma, x.c, x.k, w, x.k === "adv"); });
+        if(k === "adj") adjExtras(w).forEach(function(x){ if(x.k === "adj" && x.c.slice(0, 2) !== "ns") return; rreg(x.si, x.lemma, x.c, x.k, w, x.k === "adv"); });
       }
     });
     // 4b. reverse direction for the extra tenses
@@ -1533,6 +1534,7 @@ var FIREBASE_CONFIG = {
     var h = '<div><b>«' + esc(d.src) + '»</b></div>';
     if(d.amb) h += '<p class="note" style="margin:6px 0"><b>Контекст недостатній для однозначного вибору.</b> Показано всі правдоподібні варіанти.</p>';
     if(d.guess) h += '<p class="note" style="margin:6px 0">Такої форми немає у словнику. Її передбачено за основою слова та контекстом.</p>';
+    if(d.hy) h += '<p class="note" style="margin:6px 0">' + esc(d.hy) + '</p>';
     if(d.why && d.why.length) h += '<p class="note" style="margin:6px 0">Що показав аналіз речення: ' + esc(d.why.join("; ")) + '.</p>';
     else if(d.alts.length > 1) h += '<p class="note" style="margin:6px 0">У реченні немає підказок щодо числа чи відмінка цього слова.</p>';
     if(d.alts.length > 1 && d.alts.some(function(a){ return a.rel; })) h += '<p class="note" style="margin:6px 0">Українська форма однакова для кількох часів, тому нижче показано і споріднені часи цього дієслова.</p>';
@@ -1548,9 +1550,66 @@ var FIREBASE_CONFIG = {
     box.hidden = false;
   }
  
+  /* ---------- adjective marking: only clear cases, a doubtful word stays as it is ---------- */
+  function kindsOf(l){ var r = []; l.forEach(function(x){ if(x.k && r.indexOf(x.k) < 0) r.push(x.k); }); return r; }
+  function uniq(a){ return a.filter(function(v, i){ return v && a.indexOf(v) === i; }); }
+  function hyRole(it){
+    if(!it || !it.w || it.n !== 1) return "";
+    var t = norm(it.src), only = function(k){ return it.ks.length > 0 && it.ks.every(function(x){ return x === k; }); };
+    if(PERSON[t]) return "subj";
+    if(PL[t] || SG[t] || QU[t]) return "det";
+    if(only("adj")) return "adj";
+    if(only("verb") || BYNUM[t] !== undefined) return "verb";
+    if(only("pron")) return "pron";
+    return it.ks.indexOf("noun") > -1 ? "noun" : "";
+  }
+  // the adjective must agree with the noun in number and case
+  function hyAgree(m, h){
+    var mn = uniq(m.cl.map(numOf)), hn = uniq(h.cl.map(numOf));
+    var meet = function(a, b){ return !a.length || !b.length || a.some(function(x){ return b.indexOf(x) > -1; }); };
+    return meet(mn, hn) && meet(uniq(m.cl.map(caseOf)), uniq(h.cl.map(caseOf)));
+  }
+  /* adjective + noun -> «adj:noun» (no space); noun or pronoun + adjective -> «noun'a adj» */
+  function hyRender(items){
+    var gap = function(a, b){ return a >= 0 && b < items.length && b === a + 2 && items[a].w && items[b].w && items[a + 1].sep !== undefined && /^\s+$/.test(items[a + 1].sep); };
+    var rel = function(k){ return k >= 0 && k < items.length ? hyRole(items[k]) : ""; };
+    var colon = {}, apos = {}, skip = {}, j;
+    for(j = 0; j < items.length; j++){
+      if(rel(j) === "adj" && gap(j, j + 2) && (rel(j + 2) === "noun" || rel(j + 2) === "pron") && hyAgree(items[j], items[j + 2])){
+        colon[j] = 1; skip[j + 1] = 1;
+        if(items[j].info) items[j].info.hy = "Двокрапка: прикметник стоїть безпосередньо перед іменником чи займенником «" + items[j + 2].src + "».";
+      }
+    }
+    for(j = 0; j < items.length; j++){
+      var r = rel(j);
+      if((r === "noun" || r === "pron" || r === "subj") && !items[j].unk && gap(j, j + 2) && rel(j + 2) === "adj" && !colon[j + 2] && hyAgree(items[j + 2], items[j])){
+        apos[j] = 1;
+        if(items[j].info) items[j].info.hy = "Додано 'a: одразу після слова стоїть прикметник «" + items[j + 2].src + "».";
+      }
+    }
+    var out = "";
+    items.forEach(function(it, i){
+      if(it.sep !== undefined){ if(!skip[i]) out += esc(it.sep); return; }
+      if(it.unk){ out += '<span class="unk" title="Немає в словнику">' + esc(it.src) + '</span>'; return; }
+      var t = apos[i] ? it.text.split(" / ").map(function(x){ return x + "'a"; }).join(" / ") : it.text;
+      out += spanOf(it.info, it.src, t, it.cls) + (colon[i] ? ":" : "");
+    });
+    return out;
+  }
+  // Sitono -> Ukrainian: «tosi:wamu» is read as two words, the ending 'a is dropped (order stays the same)
+  function splitHy(parts){
+    var r = [];
+    parts.forEach(function(q, qi){
+      if(q === ":" && isW(parts[qi - 1] || "") && isW(parts[qi + 1] || "")){ r.push(" "); return; }
+      var m = isW(q) && !ridx[norm(q)] && /^(.+?)['’ʼ]a$/i.exec(q);
+      r.push(m ? m[1] : q);
+    });
+    return r;
+  }
+
   function translateFwd(){
     var text = $("source").value, parts = text.match(TOK) || [];
-    var out = "", i = 0, Wf = [], posOf = {}, sentN = 0, brk = false;
+    var items = [], i = 0, Wf = [], posOf = {}, sentN = 0, brk = false;
     popData = [];
     parts.forEach(function(q, qi){
       if(isW(q)){ posOf[qi] = Wf.length; var t = norm(q); Wf.push({t: t, s: t, a: cand[t] || [], sent: sentN, brk: brk}); brk = false; }
@@ -1558,7 +1617,7 @@ var FIREBASE_CONFIG = {
     });
     while(i < parts.length){
       var p = parts[i];
-      if(!isW(p)){ out += esc(p); i++; continue; }
+      if(!isW(p)){ items.push({sep: p}); i++; continue; }
       var done = false;
       // try the longest phrase first (words separated by single spaces)
       for(var n = maxLen; n >= 1 && !done; n--){
@@ -1571,9 +1630,9 @@ var FIREBASE_CONFIG = {
         }
         if(cnt !== n) continue;
         var srcText = seg.join(" "), fl = findLv(srcText), found = fl ? fl.si : null;
-        var info = {src: srcText, alts: []}, cls = "", shown = null;
+        var info = {src: srcText, alts: []}, cls = "", shown = null, ks = [], ucl = [];
         if(found && n === 1){
-          var cl = cand[norm(srcText)];
+          var cl = cand[norm(srcText)]; if(cl){ ks = kindsOf(cl); ucl = cl; }
           if(cl && cl.length > 1){
             // 1. analyse the sentence around the word, 2. role -> case and number, 3. only then the form
             var key = ctxKey(Wf, posOf[i], "u:"), ov = overrides[key], cu = cuesAt(Wf, posOf[i]), x = null, amb = false;
@@ -1599,29 +1658,39 @@ var FIREBASE_CONFIG = {
         if(found && n === 1 && fl.lv > 0){
           // only matched loosely by the stem: the context may tell the exact form better
           var g0 = guessFor(srcText, Wf, posOf[i]);
-          if(g0){ shown = g0.text; info = g0.info; cls = g0.amb ? "guess amb" : "guess"; }
+          if(g0){ shown = g0.text; info = g0.info; cls = g0.amb ? "guess amb" : "guess"; ks = g0.k ? [g0.k] : []; ucl = g0.cl; }
         }
         if(found){
-          out += spanOf(info, srcText, shown || matchCase(found, srcText), cls);
+          items.push({w: 1, src: srcText, text: shown || matchCase(found, srcText), cls: cls, info: info, n: n, ks: ks, cl: ucl});
           i = j; done = true;
         }
       }
       if(!done){
         var g1 = guessFor(p, Wf, posOf[i]);
         if(g1){
-          out += spanOf(g1.info, p, g1.text, g1.amb ? "guess amb" : "guess");
+          items.push({w: 1, src: p, text: g1.text, cls: g1.amb ? "guess amb" : "guess", info: g1.info, n: 1, ks: g1.k ? [g1.k] : [], cl: g1.cl});
         } else {
           missNow.push(p);
-          out += '<span class="unk" title="Немає в словнику">' + esc(p) + '</span>';
+          items.push({w: 1, unk: 1, src: p, n: 1, ks: [], cl: []});
         }
         i++;
       }
     }
-    $("result").innerHTML = text.trim() ? out : "";
+    $("result").innerHTML = text.trim() ? hyRender(items) : "";
   }
  
+  // Sitono adjectives do not decline: the case and number come from the noun next to the adjective (only when they are unambiguous)
+  function adjCase(W, p){
+    var near = function(q){
+      if(q < 0 || q >= W.length || (q > p ? W[q].brk : W[p].brk) || W[q].sent !== W[p].sent) return null;
+      var cs = uniq(W[q].a.filter(function(x){ return x.k === "noun" && x.c; }).map(function(x){ return x.c; }));
+      return cs.length === 1 ? cs[0] : null;
+    };
+    return near(p + 1) || near(p - 1);
+  }
+
   function translateRev(){
-    var text = $("source").value, parts = text.match(TOK) || [], items = [], i = 0;
+    var text = $("source").value, parts = splitHy(text.match(TOK) || []), items = [], i = 0;
     popData = [];
     while(i < parts.length){
       var p = parts[i];
@@ -1653,7 +1722,8 @@ var FIREBASE_CONFIG = {
       if(it.kind === "sep"){ out += esc(it.s); return; }
       if(!it.c){ missNow.push(it.s); out += '<span class="unk" title="Немає в словнику">' + esc(it.s) + '</span>'; return; }
       var g = genderAround(W, it.p);
-      var textOf = function(x){ return (x.k === "adj" && !x.fin) ? inflAdj(disp(x.uk), x.c || "ns", g) : x.uk; };
+      var nbc = adjCase(W, it.p);
+      var textOf = function(x){ return (x.k === "adj" && !x.fin) ? inflAdj(disp(x.uk), (nbc && (!x.c || x.c === "ns")) ? nbc : (x.c || "ns"), g) : x.uk; };
       var key = ctxKey(W, it.p, "s:"), ov = overrides[key], x = null, shown = null, amb = false, cu = cuesAt(W, it.p);
       if(ov) x = it.c.filter(function(c){ return textOf(c) === ov; })[0];
       if(!x){
