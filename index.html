@@ -33,7 +33,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 button.ghost{border:none;background:none;color:var(--muted);padding:4px 8px}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
-textarea,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea,input[type=text],input[type=number]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
 textarea{min-height:96px;resize:vertical}
 label{display:block;font-size:.9rem;color:var(--muted);margin:10px 0 4px}
 .result{min-height:64px;margin-top:14px;padding:14px;border-radius:8px;border-left:4px solid var(--accent);background:var(--bg);font-size:1.25rem;overflow-wrap:anywhere}
@@ -132,6 +132,13 @@ li span{overflow-wrap:anywhere}
     <div class="erow"><label for="end_advend" style="margin:0">Прислівник: закінчення</label><input type="text" id="end_advend" data-k="advend" autocomplete="off"></div>
     <div class="erow"><label for="end_adjnom" style="margin:0">Прикметник, утворений від іншого слова: закінчення називного</label><input type="text" id="end_adjnom" data-k="adjnom" autocomplete="off"></div>
     <p class="note">Слово можна пов'язати з прикметником і прислівником (добро, добрий, добре): у формі слова є розділ «Похідні слова». Сітонські форми утворюються так: основа слова + закінчення прислівника або закінчення називного прикметника з цього розділу.</p>
+    <h3>Числівники</h3>
+    <p class="note">Слова для чисел від 1 до 10 записуйте у словник з типом «Числівник». Решта чисел (до 9999) складається з них. Десяток: слово цифри + закінчення десятків (п'ять → 50). Сотня: слово цифри + сполучне слово + слово «сто» (2 → 200). Тисячі: слово цифри + слово «тисяча» разом (3 → 3000). Складене число: старша частина + сполучне слово + решта. У числах менших за сто двокрапка ставиться, лише якщо число не кругле (54 → 5ro:so:4, а 50 → 5ro). У числах більших за сто двокрапки навколо сполучного слова є завжди, навіть якщо число кругле (250 → detsofan:so:5ro). Порожнє поле означає стандартне значення.</p>
+    <div class="erow"><label for="end_numro" style="margin:0">Закінчення десятків (50 = 5 + …)</label><input type="text" id="end_numro" data-k="numro" placeholder="ro" autocomplete="off"></div>
+    <div class="erow"><label for="end_numso" style="margin:0">Сполучне слово (54 = 50 so 4, 200 = 2 so 100)</label><input type="text" id="end_numso" data-k="numso" placeholder="so" autocomplete="off"></div>
+    <div class="erow"><label for="end_numfan" style="margin:0">Слово «сто»</label><input type="text" id="end_numfan" data-k="numfan" placeholder="fan" autocomplete="off"></div>
+    <div class="erow"><label for="end_numthou" style="margin:0">Слово «тисяча» (без нього числа від 1000 не утворюються)</label><input type="text" id="end_numthou" data-k="numthou" autocomplete="off"></div>
+    <p class="note">Приклади (якщо 4 = <b>4</b>, 5 = <b>5</b>, 2 = <b>det</b>): 50 → <b>5ro</b>, 54 → <b>5ro:so:4</b>, 200 → <b>detsofan</b>, 250 → <b>detsofan:so:5ro</b>, 254 → <b>detsofan:so:5ro:so:4</b>.</p>
   </section>
  
   <section id="addBox" class="form" style="padding:18px;margin-top:0;border:1px solid var(--line)">
@@ -149,8 +156,14 @@ li span{overflow-wrap:anywhere}
       <option value="adj">Прикметник</option>
       <option value="adv">Прислівник (добре — краще — найкраще)</option>
       <option value="pron">Займенник або слово з власними формами</option>
+      <option value="num">Числівник (число від 1 до 10)</option>
     </select>
     <p class="note" style="margin:6px 0 0">Закінчення для кожного типу задаються в розділі «Закінчення слів».</p>
+    <div id="numBox" hidden>
+      <label for="numInput">Яке це число (від 1 до 10)</label>
+      <input type="number" id="numInput" min="1" max="10" step="1" placeholder="напр., 5">
+      <p class="note" style="margin:6px 0 0">Числа від 11 до 9999 складаються з цих слів автоматично за правилами з розділу «Закінчення слів».</p>
+    </div>
     <div id="gendBox" hidden>
       <label for="genderSel">Рід іменника</label>
       <select id="genderSel">
@@ -343,7 +356,7 @@ var FIREBASE_CONFIG = {
  
   function kindOf(w){ return w.kind || (w.verb ? "verb" : ""); }
   function putWord(w){
-    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", t: w.t || Date.now()};
+    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", t: w.t || Date.now()};
     if(wordsCol){ wordsCol.doc(w.id).set(data).catch(onErr); return; }
     data.id = w.id;
     var i = words.map(function(x){ return x.id; }).indexOf(w.id);
@@ -417,7 +430,7 @@ var FIREBASE_CONFIG = {
   }
  
   /* ---------- noun / adjective / pronoun declension ---------- */
-  var KIND_NAMES = {verb:"дієслово", noun:"іменник", adj:"прикметник", adv:"прислівник", pron:"займенник"};
+  var KIND_NAMES = {verb:"дієслово", noun:"іменник", adj:"прикметник", adv:"прислівник", pron:"займенник", num:"числівник"};
   var CASES = [["n","Називний"],["g","Родовий"],["d","Давальний"],["a","Знахідний"],["i","Орудний"]];
   var CKEYS = [];
   CASES.forEach(function(c){ ["s","p"].forEach(function(n){ CKEYS.push({k: c[0] + n, label: c[1] + (n === "s" ? ", одн." : ", множ.")}); }); });
@@ -1350,6 +1363,75 @@ var FIREBASE_CONFIG = {
   }
   var cand = Object.create(null), ridx = Object.create(null), maxSi = 1;
  
+  /* ---------- numerals: 1-10 are dictionary words (type "num"), 11-999 are built from them ---------- */
+  var UK_U = ["", "один", "два", "три", "чотири", "п'ять", "шість", "сім", "вісім", "дев'ять"];
+  var UK_T = ["десять", "одинадцять", "дванадцять", "тринадцять", "чотирнадцять", "п'ятнадцять", "шістнадцять", "сімнадцять", "вісімнадцять", "дев'ятнадцять"];
+  var UK_D = ["", "", "двадцять", "тридцять", "сорок", "п'ятдесят", "шістдесят", "сімдесят", "вісімдесят", "дев'яносто"];
+  var UK_H = ["", "сто", "двісті", "триста", "чотириста", "п'ятсот", "шістсот", "сімсот", "вісімсот", "дев'ятсот"];
+  function ukNum3(n){
+    var h = Math.floor(n / 100), r = n % 100, a = [];
+    if(h) a.push(UK_H[h]);
+    if(r >= 20){ a.push(UK_D[Math.floor(r / 10)]); if(r % 10) a.push(UK_U[r % 10]); }
+    else if(r >= 10) a.push(UK_T[r - 10]);
+    else if(r > 0) a.push(UK_U[r]);
+    return a.join(" ");
+  }
+  function ukNum(n){
+    var th = Math.floor(n / 1000), r = n % 1000, a = [];
+    if(th) a.push(th === 1 ? "тисяча" : th === 2 ? "дві тисячі" : th < 5 ? UK_U[th] + " тисячі" : UK_U[th] + " тисяч");
+    if(r) a.push(ukNum3(r));
+    return a.join(" ");
+  }
+  function numCfg(){
+    var g = function(k, d){ var v = ev(endings[k]); return v === null ? d : v; };
+    return {ro: g("numro", "ro"), so: g("numso", "so"), fan: g("numfan", "fan"), thou: g("numthou", null)};
+  }
+  // W[d] = sitonian word of the digit d (1..10). Below 100 a number gets colons around the joining word only if it is not round; above 100 always.
+  function siNum(n, W, c){
+    var h, r, t, u, tp, hp, rs;
+    if(n <= 10) return W[n] || null;
+    if(n >= 1000){
+      if(c.thou === null) return null;
+      t = Math.floor(n / 1000); r = n % 1000;
+      tp = t === 1 ? c.thou : (W[t] ? W[t] + c.thou : null);
+      if(!tp) return null;
+      if(!r) return tp;
+      rs = siNum(r, W, c);
+      if(!rs) return null;
+      return tp + ":" + c.so + ":" + rs;
+    }
+    if(n < 100){
+      t = Math.floor(n / 10); u = n % 10;
+      tp = t === 1 ? W[10] : (W[t] ? W[t] + c.ro : null);
+      if(!tp) return null;
+      if(!u) return tp;
+      return W[u] ? tp + ":" + c.so + ":" + W[u] : null;
+    }
+    h = Math.floor(n / 100); r = n % 100;
+    hp = h === 1 ? c.fan : (W[h] ? W[h] + c.so + c.fan : null);
+    if(!hp) return null;
+    if(!r) return hp;
+    rs = siNum(r, W, c);
+    if(!rs) return null;
+    return hp + ":" + c.so + ":" + rs;
+  }
+  function addNumbers(gen, rreg){
+    var W = {}, c = numCfg(), n, si, uk, wo;
+    words.forEach(function(w){ var d = parseInt(w.num, 10); if(kindOf(w) === "num" && d >= 1 && d <= 10 && !W[d]) W[d] = w.si.toLowerCase(); });
+    for(n = 1; n <= 9999; n++){
+      si = siNum(n, W, c);
+      if(!si) continue;
+      uk = n > 10 ? ukNum(n) : String(n);
+      wo = {id: "#num" + n, si: si, uk: [uk], forms: [], kind: "num", num: String(n)};
+      gen(String(n), si, true, "", "num", "", wo);                                   // digits: 54 -> 5ro:so:4
+      if(n > 10){
+        gen(uk, si, true, "", "num", "", wo);
+        if(n >= 1000 && n < 2000) gen(uk.replace(/^тисяча/, "одна тисяча"), si, true, "", "num", "", wo);                                       // words: п'ятдесят чотири
+        rreg(si.replace(/:/g, " "), uk, "", "num", wo, true);                       // colons are read as spaces (see splitHy)
+      }
+    }
+  }
+ 
   function rebuild(){
     ALL = expandWords();
     idx = [Object.create(null), Object.create(null), Object.create(null)]; maxLen = 1;
@@ -1436,6 +1518,8 @@ var FIREBASE_CONFIG = {
         if(k === "adj") adjExtras(w).forEach(function(x){ if(x.k === "adj" && x.c.slice(0, 2) !== "ns") return; rreg(x.si, x.lemma, x.c, x.k, w, x.k === "adv"); });
       }
     });
+    // 4a. numerals 11-999 built from the words for 1-10
+    addNumbers(gen, rreg);
     // 4b. reverse direction for the extra tenses
     if(tenseList().length){
       var rrp = function(si, uk, c, k, w2, fin, asp, post){ rreg(si, post ? post(uk) : uk, c, k, w2, fin, asp); };
@@ -1866,7 +1950,7 @@ var FIREBASE_CONFIG = {
     }
     ul.innerHTML = items.map(function(o){
       var f = (o.w.forms || []).map(function(x){ return esc(x.uk) + " → " + esc(formSi(o.w, x)); }).join(", ");
-      return '<li><span><b>' + esc(o.w.si) + '</b>' + (kindOf(o.w) ? ' <span class="note">(' + KIND_NAMES[kindOf(o.w)] + ')</span>' : '') + ' — ' + esc(o.w.uk.join(", ")) +
+      return '<li><span><b>' + esc(o.w.si) + '</b>' + (kindOf(o.w) ? ' <span class="note">(' + KIND_NAMES[kindOf(o.w)] + (o.w.num ? ' ' + esc(String(o.w.num)) : '') + ')</span>' : '') + ' — ' + esc(o.w.uk.join(", ")) +
              (f ? '<br><span class="note">' + f + '</span>' : '') + '</span>' +
              '<span class="acts"><button class="ghost" data-edit="' + o.w.id + '">Змінити</button>' +
              '<button class="ghost" data-del="' + o.w.id + '" aria-label="Видалити">Видалити</button></span></li>';
@@ -1881,7 +1965,7 @@ var FIREBASE_CONFIG = {
   var editId = null;
   // the derived-words block: not for verbs, pronouns, adverbs; an adjective only has an adverb
   function setDerBox(kind){
-    $("derBox").hidden = kind === "verb" || kind === "pron" || kind === "adv";
+    $("derBox").hidden = kind === "verb" || kind === "pron" || kind === "adv" || kind === "num";
     $("dadjWrap").hidden = kind === "adj";
   }
  
@@ -1915,7 +1999,7 @@ var FIREBASE_CONFIG = {
     }).filter(function(f){ return f.uk; });
   }
   function resetForm(){
-    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("aspectSel").value = ""; $("pfiInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true; $("cmpInput").value = ""; $("cmpBox").hidden = true; ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = ""; }); $("degSel").value = ""; $("ddegSel").value = ""; setDerBox("");
+    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("aspectSel").value = ""; $("pfiInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true; $("cmpInput").value = ""; $("cmpBox").hidden = true; ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = ""; }); $("degSel").value = ""; $("ddegSel").value = ""; setDerBox(""); $("numInput").value = ""; $("numBox").hidden = true;
     editId = null; $("saveBtn").textContent = "Зберегти";
   }
   function openForm(open){
@@ -1935,6 +2019,7 @@ var FIREBASE_CONFIG = {
     $("nomInput").value = w.nom || "";
     $("genderSel").value = w.gender || "";
     $("gendBox").hidden = kindOf(w) !== "noun";
+    $("numInput").value = w.num || ""; $("numBox").hidden = kindOf(w) !== "num";
     $("oblInput").value = w.obl || ""; $("pluInput").value = w.plu || ""; $("cmpInput").value = w.cmpuk || "";
     $("cmpBox").hidden = kindOf(w) !== "adj" && kindOf(w) !== "adv";
     ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = w[f] || ""; });
@@ -1959,19 +2044,25 @@ var FIREBASE_CONFIG = {
     var obl = kind === "noun" ? $("oblInput").value.trim() : "", plu = kind === "noun" ? $("pluInput").value.trim() : "";
     var cmpuk = (kind === "adj" || kind === "adv") ? $("cmpInput").value.trim() : "";
     var dadj = $("dadjInput").value.trim(), dadjc = $("dadjcInput").value.trim(), dadv = $("dadvInput").value.trim(), dadvc = $("dadvcInput").value.trim();
-    if(kind === "verb" || kind === "pron" || kind === "adv"){ dadj = dadjc = dadv = dadvc = ""; }
+    if(kind === "verb" || kind === "pron" || kind === "adv" || kind === "num"){ dadj = dadjc = dadv = dadvc = ""; }
     if(kind === "adj"){ dadj = ""; dadjc = ""; }
-    var deg = (kind === "adj" || kind === "adv") ? $("degSel").value : "", ddeg = (kind === "verb" || kind === "pron" || kind === "adv") ? "" : $("ddegSel").value;
+    var deg = (kind === "adj" || kind === "adv") ? $("degSel").value : "", ddeg = (kind === "verb" || kind === "pron" || kind === "adv" || kind === "num") ? "" : $("ddegSel").value;
+    var num = "";
+    if(kind === "num"){
+      var nv = parseInt($("numInput").value, 10);
+      if(!(nv >= 1 && nv <= 10)){ setMsg("Для числівника вкажіть, яке це число: від 1 до 10."); return; }
+      num = String(nv);
+    }
     if(!si || !uk.length){ setMsg("Заповніть слово і його переклад."); return; }
     var wasEdit = !!editId;
     var cur = wasEdit ? words.filter(function(w){ return w.id === editId; })[0] : null;
     if(cur){
-      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, pres: pres, pf: pf, pfi: pfi, past: past});
+      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, num: num, pres: pres, pf: pf, pfi: pfi, past: past});
     } else {
       var existing = words.filter(function(w){ return norm(w.si) === norm(si); })[0];
       if(existing){
         var m = {id: existing.id, t: existing.t, si: existing.si, uk: existing.uk.slice(),
-                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", cmpuk: cmpuk || existing.cmpuk || "", dadj: dadj || existing.dadj || "", dadjc: dadjc || existing.dadjc || "", dadv: dadv || existing.dadv || "", dadvc: dadvc || existing.dadvc || "", deg: deg || existing.deg || "", ddeg: ddeg || existing.ddeg || "", pres: pres || existing.pres || "", pf: pf || existing.pf || "", pfi: pfi || existing.pfi || "", past: past || existing.past || ""};
+                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", cmpuk: cmpuk || existing.cmpuk || "", dadj: dadj || existing.dadj || "", dadjc: dadjc || existing.dadjc || "", dadv: dadv || existing.dadv || "", dadvc: dadvc || existing.dadvc || "", deg: deg || existing.deg || "", ddeg: ddeg || existing.ddeg || "", num: num || existing.num || "", pres: pres || existing.pres || "", pf: pf || existing.pf || "", pfi: pfi || existing.pfi || "", past: past || existing.past || ""};
         uk.forEach(function(u){
           if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u);
         });
@@ -1980,7 +2071,7 @@ var FIREBASE_CONFIG = {
         });
         putWord(m);
       } else {
-        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, pres: pres, pf: pf, pfi: pfi, past: past});
+        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, num: num, pres: pres, pf: pf, pfi: pfi, past: past});
       }
     }
     resetForm();
@@ -2003,6 +2094,7 @@ var FIREBASE_CONFIG = {
     $("irr").hidden = $("kindSel").value !== "verb";
     $("nomBox").hidden = ["noun","adj","pron"].indexOf($("kindSel").value) < 0;
     $("gendBox").hidden = $("kindSel").value !== "noun";
+    $("numBox").hidden = $("kindSel").value !== "num";
     $("stemBox").hidden = $("kindSel").value !== "noun";
     $("cmpBox").hidden = $("kindSel").value !== "adj" && $("kindSel").value !== "adv";
     setDerBox($("kindSel").value);
@@ -2151,7 +2243,7 @@ var FIREBASE_CONFIG = {
       var el = $("end_" + r.k);
       if(document.activeElement !== el) el.value = endings[r.k] || "";
     });
-    ["adjcmp", "adjsup", "advend", "adjnom", "futword", "condword"].forEach(function(k){
+    ["adjcmp", "adjsup", "advend", "adjnom", "futword", "condword", "numro", "numso", "numfan", "numthou"].forEach(function(k){
       var el = $("end_" + k);
       if(el && document.activeElement !== el) el.value = endings[k] || "";
     });
@@ -2187,7 +2279,7 @@ var FIREBASE_CONFIG = {
   }
   $("migBtn").onclick = function(){
     missingLocal().forEach(function(w,i){
-      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""});
+      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""});
     });
     var le = localEndings();
     if(hasEnd(le) && !hasEnd(endings)){ endings = le; persistEndings(); fillEnd(); }
@@ -2211,7 +2303,7 @@ var FIREBASE_CONFIG = {
       wordsCol.orderBy("t").onSnapshot(function(snap){
         words = snap.docs.map(function(x){
           var o = x.data() || {};
-          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", cmpuk: o.cmpuk || "", dadj: o.dadj || "", dadjc: o.dadjc || "", dadv: o.dadv || "", dadvc: o.dadvc || "", deg: o.deg || "", ddeg: o.ddeg || "", pres: o.pres || "", pf: o.pf || "", pfi: o.pfi || "", past: o.past || "", t: o.t || 0};
+          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", cmpuk: o.cmpuk || "", dadj: o.dadj || "", dadjc: o.dadjc || "", dadv: o.dadv || "", dadvc: o.dadvc || "", deg: o.deg || "", ddeg: o.ddeg || "", num: o.num || "", pres: o.pres || "", pf: o.pf || "", pfi: o.pfi || "", past: o.past || "", t: o.t || 0};
         });
         if(!snap.metadata.fromCache) loaded = true;
         refresh(); offerMigration();
@@ -2229,7 +2321,7 @@ var FIREBASE_CONFIG = {
   function ioMsg(t){ $("ioMsg").textContent = t; }
   function exportData(){
     return JSON.stringify({app: "sitono", version: 1, endings: endings, words: words.map(function(w){
-      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", nom: w.nom || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", forms: w.forms || []};
+      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", nom: w.nom || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", forms: w.forms || []};
     })}, null, 2);
   }
   function exportFile(){
@@ -2287,12 +2379,12 @@ var FIREBASE_CONFIG = {
         uk.forEach(function(u){ if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u); });
         m.forms = m.forms || [];
         forms.forEach(function(f){ if(m.forms.map(function(x){ return norm(x.uk); }).indexOf(norm(f.uk)) < 0) m.forms.push(f); });
-        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || ""; m.cmpuk = m.cmpuk || w.cmpuk || ""; m.dadj = m.dadj || w.dadj || ""; m.dadjc = m.dadjc || w.dadjc || ""; m.dadv = m.dadv || w.dadv || ""; m.dadvc = m.dadvc || w.dadvc || ""; m.deg = m.deg || w.deg || ""; m.ddeg = m.ddeg || w.ddeg || "";
+        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || ""; m.cmpuk = m.cmpuk || w.cmpuk || ""; m.dadj = m.dadj || w.dadj || ""; m.dadjc = m.dadjc || w.dadjc || ""; m.dadv = m.dadv || w.dadv || ""; m.dadvc = m.dadvc || w.dadvc || ""; m.deg = m.deg || w.deg || ""; m.ddeg = m.ddeg || w.ddeg || ""; m.num = m.num || w.num || "";
         m.pres = m.pres || w.pres || ""; m.pf = m.pf || w.pf || ""; m.pfi = m.pfi || w.pfi || ""; m.past = m.past || w.past || "";
         if(!touched[key]) updated++;
       } else {
         m = byKey[key] = {id: newId(), t: Date.now() + added, si: si, uk: uk, forms: forms, kind: w.kind || "", nom: w.nom || "",
-                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""};
+                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""};
         added++;
       }
       touched[key] = 1;
