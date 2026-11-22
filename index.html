@@ -133,11 +133,13 @@ li span{overflow-wrap:anywhere}
     <div class="erow"><label for="end_adjnom" style="margin:0">Прикметник, утворений від іншого слова: закінчення називного</label><input type="text" id="end_adjnom" data-k="adjnom" autocomplete="off"></div>
     <p class="note">Слово можна пов'язати з прикметником і прислівником (добро, добрий, добре): у формі слова є розділ «Похідні слова». Сітонські форми утворюються так: основа слова + закінчення прислівника або закінчення називного прикметника з цього розділу.</p>
     <h3>Числівники</h3>
-    <p class="note">Слова для чисел від 1 до 10 записуйте у словник з типом «Числівник». Решта чисел (до 9999) складається з них. Десяток: слово цифри + закінчення десятків (п'ять → 50). Сотня: слово цифри + сполучне слово + слово «сто» (2 → 200). Тисячі: слово цифри + слово «тисяча» разом (3 → 3000). Складене число: старша частина + сполучне слово + решта. У числах менших за сто двокрапка ставиться, лише якщо число не кругле (54 → 5ro:so:4, а 50 → 5ro). У числах більших за сто двокрапки навколо сполучного слова є завжди, навіть якщо число кругле (250 → detsofan:so:5ro). Порожнє поле означає стандартне значення.</p>
+    <p class="note">Слова для чисел від 0 до 10 записуйте у словник з типом «Числівник». Решта чисел (до 999 999 999 999) складається з них. Десяток: слово цифри + закінчення десятків (п'ять → 50). Сотня: слово цифри + сполучне слово + слово «сто» (2 → 200). Тисячі, мільйони, мільярди: число від 1 до 999 пишеться як завжди, а до нього дописується слово розряду (3 → 3000, 20 → 20 000, 200 → 200 000), одиниця перед розрядом не пишеться (1000 → лише слово «тисяча»), а розряди розділяються через «:so:». Складене число: старша частина + сполучне слово + решта. У числах менших за сто двокрапка ставиться, лише якщо число не кругле (54 → 5ro:so:4, а 50 → 5ro). У числах більших за сто двокрапки навколо сполучного слова є завжди, навіть якщо число кругле (250 → detsofan:so:5ro). Порожнє поле означає стандартне значення. Від числа 11 є й другий варіант перекладу: абревіатура з великих перших літер слів цифр числа. Після літери стоїть мала позначка розряду, яку програма бере сама з налаштувань вище: перша літера слова «сто» — для сотень, слова «тисяча» — для тисяч, «мільйон» — для мільйонів, «мільярд» — для мільярдів; для десятків і сотень цих розрядів літери складаються (десятки тисяч = літера закінчення десятків + літера тисяч). Десятки позначаються першою літерою закінчення десятків лише тоді, коли одиниць немає. Нулі не пишуться (для ro, fan, ŧou: 28 → ÐO, 208 → ÐfO, 2008 → ÐŧO, 280 → ÐfOr).</p>
     <div class="erow"><label for="end_numro" style="margin:0">Закінчення десятків (50 = 5 + …)</label><input type="text" id="end_numro" data-k="numro" placeholder="ro" autocomplete="off"></div>
     <div class="erow"><label for="end_numso" style="margin:0">Сполучне слово (54 = 50 so 4, 200 = 2 so 100)</label><input type="text" id="end_numso" data-k="numso" placeholder="so" autocomplete="off"></div>
     <div class="erow"><label for="end_numfan" style="margin:0">Слово «сто»</label><input type="text" id="end_numfan" data-k="numfan" placeholder="fan" autocomplete="off"></div>
     <div class="erow"><label for="end_numthou" style="margin:0">Слово «тисяча» (без нього числа від 1000 не утворюються)</label><input type="text" id="end_numthou" data-k="numthou" autocomplete="off"></div>
+    <div class="erow"><label for="end_nummil" style="margin:0">Слово «мільйон» (без нього числа від 1 000 000 не утворюються)</label><input type="text" id="end_nummil" data-k="nummil" autocomplete="off"></div>
+    <div class="erow"><label for="end_numbil" style="margin:0">Слово «мільярд» (без нього числа від 1 000 000 000 не утворюються)</label><input type="text" id="end_numbil" data-k="numbil" autocomplete="off"></div>
     <p class="note">Приклади (якщо 4 = <b>4</b>, 5 = <b>5</b>, 2 = <b>det</b>): 50 → <b>5ro</b>, 54 → <b>5ro:so:4</b>, 200 → <b>detsofan</b>, 250 → <b>detsofan:so:5ro</b>, 254 → <b>detsofan:so:5ro:so:4</b>.</p>
   </section>
  
@@ -156,13 +158,13 @@ li span{overflow-wrap:anywhere}
       <option value="adj">Прикметник</option>
       <option value="adv">Прислівник (добре — краще — найкраще)</option>
       <option value="pron">Займенник або слово з власними формами</option>
-      <option value="num">Числівник (число від 1 до 10)</option>
+      <option value="num">Числівник (число від 0 до 10)</option>
     </select>
     <p class="note" style="margin:6px 0 0">Закінчення для кожного типу задаються в розділі «Закінчення слів».</p>
     <div id="numBox" hidden>
-      <label for="numInput">Яке це число (від 1 до 10)</label>
-      <input type="number" id="numInput" min="1" max="10" step="1" placeholder="напр., 5">
-      <p class="note" style="margin:6px 0 0">Числа від 11 до 9999 складаються з цих слів автоматично за правилами з розділу «Закінчення слів».</p>
+      <label for="numInput">Яке це число (від 0 до 10)</label>
+      <input type="number" id="numInput" min="0" max="10" step="1" placeholder="напр., 5">
+      <p class="note" style="margin:6px 0 0">Числа від 11 до 999 999 999 999 складаються з цих слів автоматично за правилами з розділу «Закінчення слів».</p>
     </div>
     <div id="gendBox" hidden>
       <label for="genderSel">Рід іменника</label>
@@ -1052,7 +1054,7 @@ var FIREBASE_CONFIG = {
     if(ov){ var m = gs.list.filter(function(c){ return c.si === ov; })[0]; if(m){ x = m; amb = false; } }
     var alts = groupAlts(gs.list, out, x, src);
     if(amb) alts.forEach(function(a){ a.on = false; });
-    var text = amb ? dd.set.map(function(c){ return matchCase(c.si, src); }).join(" / ") : matchCase(x.si, src);
+    var text = amb ? dd.set.map(function(c){ return caseFor(c, c.si, src); }).join(" / ") : caseFor(x, x.si, src);
     return {text: text, amb: amb, k: x.k, cl: amb ? dd.set : [x], info: {src: src, key: key, guess: true, amb: amb, why: gs.cu.why, alts: alts}};
   }
   function guessWord(u, W, p){
@@ -1363,43 +1365,78 @@ var FIREBASE_CONFIG = {
   }
   var cand = Object.create(null), ridx = Object.create(null), maxSi = 1;
  
-  /* ---------- numerals: 1-10 are dictionary words (type "num"), 11-999 are built from them ---------- */
+  /* ---------- numerals: 1-10 are dictionary words (type "num"); everything up to 999 999 999 999 is built from them ---------- */
   var UK_U = ["", "один", "два", "три", "чотири", "п'ять", "шість", "сім", "вісім", "дев'ять"];
   var UK_T = ["десять", "одинадцять", "дванадцять", "тринадцять", "чотирнадцять", "п'ятнадцять", "шістнадцять", "сімнадцять", "вісімнадцять", "дев'ятнадцять"];
   var UK_D = ["", "", "двадцять", "тридцять", "сорок", "п'ятдесят", "шістдесят", "сімдесят", "вісімдесят", "дев'яносто"];
   var UK_H = ["", "сто", "двісті", "триста", "чотириста", "п'ятсот", "шістсот", "сімсот", "вісімсот", "дев'ятсот"];
-  function ukNum3(n){
-    var h = Math.floor(n / 100), r = n % 100, a = [];
+  var UK_SC = [[1e9, "мільярд", "мільярди", "мільярдів", false], [1e6, "мільйон", "мільйони", "мільйонів", false], [1e3, "тисяча", "тисячі", "тисяч", true]];
+  var NUMCTX = null;
+  function ukKey(s){ return s.toLowerCase().replace(/['’ʼ]/g, ""); }
+  var UK_VOC = (function(){
+    var v = Object.create(null);
+    function put(w, tp, val, one){ v[ukKey(w)] = {t: tp, v: val, one: !!one}; }
+    var i;
+    for(i = 1; i < 10; i++) put(UK_U[i], "u", i);
+    put("одна", "u", 1); put("дві", "u", 2);
+    for(i = 0; i < 10; i++) put(UK_T[i], "t", 10 + i);
+    for(i = 2; i < 10; i++) put(UK_D[i], "d", i * 10);
+    for(i = 1; i < 10; i++) put(UK_H[i], "h", i * 100);
+    UK_SC.forEach(function(s){ put(s[1], "s", s[0], true); put(s[2], "s", s[0]); put(s[3], "s", s[0]); });
+    return v;
+  })();
+  function ukGroup(g, fem){
+    var h = Math.floor(g / 100), r = g % 100, a = [];
+    var unit = function(u){ return fem && u === 1 ? "одна" : fem && u === 2 ? "дві" : UK_U[u]; };
     if(h) a.push(UK_H[h]);
-    if(r >= 20){ a.push(UK_D[Math.floor(r / 10)]); if(r % 10) a.push(UK_U[r % 10]); }
+    if(r >= 20){ a.push(UK_D[Math.floor(r / 10)]); if(r % 10) a.push(unit(r % 10)); }
     else if(r >= 10) a.push(UK_T[r - 10]);
-    else if(r > 0) a.push(UK_U[r]);
+    else if(r > 0) a.push(unit(r));
     return a.join(" ");
   }
+  function ukForm(g, one, few, many){
+    var r = g % 100, d = g % 10;
+    return (r >= 11 && r <= 14) || d === 0 || d >= 5 ? many : d === 1 ? one : few;
+  }
   function ukNum(n){
-    var th = Math.floor(n / 1000), r = n % 1000, a = [];
-    if(th) a.push(th === 1 ? "тисяча" : th === 2 ? "дві тисячі" : th < 5 ? UK_U[th] + " тисячі" : UK_U[th] + " тисяч");
-    if(r) a.push(ukNum3(r));
-    return a.join(" ");
+    var parts = [], rest = n, i, g, s;
+    for(i = 0; i < 3; i++){
+      s = UK_SC[i]; g = Math.floor(rest / s[0]); rest %= s[0];
+      if(!g) continue;
+      parts.push(i === 2 && g === 1 ? s[1] : ukGroup(g, s[4]) + " " + ukForm(g, s[1], s[2], s[3]));
+    }
+    if(rest) parts.push(ukGroup(rest, false));
+    return parts.join(" ");
+  }
+  // Ukrainian number words -> value (null if the words do not form one number)
+  function parseUk(tk){
+    var total = 0, cur = 0, slot = 0, lastS = Infinity, i, e, bit, any = false;
+    for(i = 0; i < tk.length; i++){
+      e = UK_VOC[ukKey(tk[i])];
+      if(!e) return null;
+      if(e.t === "s"){
+        if(e.v >= lastS) return null;
+        if(!cur && !e.one) return null;
+        total += (cur || 1) * e.v; cur = 0; slot = 0; lastS = e.v;
+      } else {
+        bit = e.t === "h" ? 1 : e.t === "u" ? 4 : 2;
+        if(bit <= slot) return null;
+        slot = e.t === "t" ? 4 : bit;
+        cur += e.v;
+      }
+      any = true;
+    }
+    total += cur;
+    return any && total < 1e12 ? total : null;
   }
   function numCfg(){
     var g = function(k, d){ var v = ev(endings[k]); return v === null ? d : v; };
-    return {ro: g("numro", "ro"), so: g("numso", "so"), fan: g("numfan", "fan"), thou: g("numthou", null)};
+    return {ro: g("numro", "ro"), so: g("numso", "so"), fan: g("numfan", "fan"), thou: g("numthou", null), mil: g("nummil", null), bil: g("numbil", null)};
   }
   // W[d] = sitonian word of the digit d (1..10). Below 100 a number gets colons around the joining word only if it is not round; above 100 always.
-  function siNum(n, W, c){
+  function siSmall(n, W, c){
     var h, r, t, u, tp, hp, rs;
     if(n <= 10) return W[n] || null;
-    if(n >= 1000){
-      if(c.thou === null) return null;
-      t = Math.floor(n / 1000); r = n % 1000;
-      tp = t === 1 ? c.thou : (W[t] ? W[t] + c.thou : null);
-      if(!tp) return null;
-      if(!r) return tp;
-      rs = siNum(r, W, c);
-      if(!rs) return null;
-      return tp + ":" + c.so + ":" + rs;
-    }
     if(n < 100){
       t = Math.floor(n / 10); u = n % 10;
       tp = t === 1 ? W[10] : (W[t] ? W[t] + c.ro : null);
@@ -1411,25 +1448,212 @@ var FIREBASE_CONFIG = {
     hp = h === 1 ? c.fan : (W[h] ? W[h] + c.so + c.fan : null);
     if(!hp) return null;
     if(!r) return hp;
-    rs = siNum(r, W, c);
+    rs = siSmall(r, W, c);
     if(!rs) return null;
     return hp + ":" + c.so + ":" + rs;
   }
-  function addNumbers(gen, rreg){
-    var W = {}, c = numCfg(), n, si, uk, wo;
-    words.forEach(function(w){ var d = parseInt(w.num, 10); if(kindOf(w) === "num" && d >= 1 && d <= 10 && !W[d]) W[d] = w.si.toLowerCase(); });
-    for(n = 1; n <= 9999; n++){
-      si = siNum(n, W, c);
-      if(!si) continue;
-      uk = n > 10 ? ukNum(n) : String(n);
-      wo = {id: "#num" + n, si: si, uk: [uk], forms: [], kind: "num", num: String(n)};
-      gen(String(n), si, true, "", "num", "", wo);                                   // digits: 54 -> 5ro:so:4
-      if(n > 10){
-        gen(uk, si, true, "", "num", "", wo);
-        if(n >= 1000 && n < 2000) gen(uk.replace(/^тисяча/, "одна тисяча"), si, true, "", "num", "", wo);                                       // words: п'ятдесят чотири
-        rreg(si.replace(/:/g, " "), uk, "", "num", wo, true);                       // colons are read as spaces (see splitHy)
-      }
+  // thousands, millions, billions: the group (1-999) is written as usual and the word of the rank is added to it; a group of 1 is the rank word alone
+  function siNum(n, W, c){
+    var sc = [[1e9, c.bil], [1e6, c.mil], [1e3, c.thou]], parts = [], rest = n, i, g, gs, rs;
+    if(n < 1000) return siSmall(n, W, c);
+    if(n >= 1e12) return null;
+    for(i = 0; i < 3; i++){
+      g = Math.floor(rest / sc[i][0]); rest %= sc[i][0];
+      if(!g) continue;
+      if(sc[i][1] === null) return null;
+      if(g === 1) gs = "";
+      else { gs = siSmall(g, W, c); if(!gs) return null; }
+      parts.push(gs + sc[i][1]);
     }
+    if(rest){ rs = siSmall(rest, W, c); if(!rs) return null; parts.push(rs); }
+    return parts.join(":" + c.so + ":");
+  }
+  // abbreviation: capital first letter of the word of every non-zero digit, followed by a small mark of its place. The marks are the first letters
+  // of the words of the translator: ro (tens, only when there are no units), fan (hundreds), thousand, million, billion; ten-thousands = letter of ro + letter of thousand,
+  // hundred-thousands = letter of fan + letter of thousand, and so on (28 -> ÐO, 208 -> ÐfO, 2008 -> ÐŧO, 280 -> ÐfOr with ro, fan, ŧou); zeros are skipped
+  function abbrMarks(c){
+    var lc = function(w){ return w ? Array.from(w)[0].toLowerCase() : ""; };
+    var r = lc(c.ro), f = lc(c.fan), T = lc(c.thou), M = lc(c.mil), B = lc(c.bil);
+    var mk = function(){ var i, s = ""; for(i = 0; i < arguments.length; i++){ if(!arguments[i]) return null; s += arguments[i]; } return s; };
+    return ["", mk(r), mk(f), mk(T), mk(r, T), mk(f, T), mk(M), mk(r, M), mk(f, M), mk(B), mk(r, B), mk(f, B)];
+  }
+  function abbrNum(n, W, MARK){
+    var s = String(n), L = s.length, out = "", i, d, w, p;
+    for(i = 0; i < L; i++){
+      d = +s[i];
+      if(!d) continue;
+      w = W[d];
+      if(!w) return null;
+      p = L - 1 - i;
+      out += Array.from(w)[0].toUpperCase();
+      if(p === 1){ if(s[L - 1] === "0"){ if(!MARK[1]) return null; out += MARK[1]; } }
+      else if(p >= 2){ if(!MARK[p]) return null; out += MARK[p]; }
+    }
+    return out;
+  }
+  // abbreviation -> number (null if the text is not an abbreviation of a number)
+  function abbrBack(tok, X){
+    var cs = Array.from(tok), items = [], cur = null, i, d, n = 0, un = [], rank;
+    if(cs.length > 30) return null;
+    for(i = 0; i < cs.length; i++){
+      if(cur && X.MK[cs[i]]){ cur.m += cs[i]; continue; }
+      d = X.AB[cs[i]];
+      if(d === undefined || d < 0) return null;
+      cur = {d: d, m: ""}; items.push(cur);
+    }
+    if(!items.length) return null;
+    for(i = 0; i < items.length; i++){
+      if(items[i].m === ""){ un.push(items[i]); continue; }
+      rank = X.MARK.indexOf(items[i].m);
+      if(rank < 1) return null;
+      n += items[i].d * Math.pow(10, rank);
+    }
+    if(un.length > 2) return null;
+    un.forEach(function(it, j){ n += it.d * Math.pow(10, un.length - 1 - j); });
+    return n >= 1 && n < 1e12 && abbrNum(n, X.W, X.MARK) === tok ? n : null;
+  }
+  // sitonian atom -> {v: value of the part, s: value of the rank word at its end (0 if none)}
+  function siCore(core, X){
+    var d, tail;
+    if(X.fan && core === X.fan) return 100;
+    if(X.NS[core]) return X.NS[core];
+    if(X.ro && core.length > X.ro.length && core.slice(-X.ro.length) === X.ro){
+      d = X.NS[core.slice(0, -X.ro.length)];
+      if(d >= 2 && d <= 9) return d * 10;
+    }
+    tail = X.so + X.fan;
+    if(X.fan && core.length > tail.length && core.slice(-tail.length) === tail){
+      d = X.NS[core.slice(0, -tail.length)];
+      if(d >= 2 && d <= 9) return d * 100;
+    }
+    return null;
+  }
+  function siAtom(a, X){
+    var sc = [[1e9, X.bil], [1e6, X.mil], [1e3, X.thou]], i, r, w;
+    r = siCore(a, X);
+    if(r) return {v: r, s: 0};
+    for(i = 0; i < 3; i++){
+      w = sc[i][1];
+      if(!w || a.length < w.length || a.slice(-w.length) !== w) continue;
+      if(a.length === w.length) return {v: 0, s: sc[i][0]};
+      r = siCore(a.slice(0, -w.length), X);
+      if(r) return {v: r, s: sc[i][0]};
+    }
+    return null;
+  }
+  // tokens (already normalised) of a sitonian number joined by the joining word -> value, checked by writing it back
+  function parseSi(toks, X){
+    var total = 0, pending = 0, lastS = Infinity, i, a, g, si;
+    if(!X.so || toks.length % 2 === 0) return null;
+    for(i = 0; i < toks.length; i++){
+      if(i % 2){ if(toks[i] !== X.so) return null; continue; }
+      a = siAtom(toks[i], X);
+      if(!a) return null;
+      if(a.s){
+        if(a.s >= lastS) return null;
+        g = pending + a.v || 1;
+        total += g * a.s; pending = 0; lastS = a.s;
+      } else pending += a.v;
+    }
+    total += pending;
+    if(!(total >= 1 && total < 1e12)) return null;
+    si = siNum(total, X.W, X.c);
+    return si && norm(si.replace(/:/g, " ")) === toks.join(" ") ? total : null;
+  }
+  // puts the number n into the dictionary of the translator: under the given source keys (forward) and as sitonian forms (reverse)
+  function numPut(n, keys){
+    var X = NUMCTX, si, ab, uk, wo;
+    if(!X) return;
+    si = siNum(n, X.W, X.c); ab = n > 10 ? abbrNum(n, X.W, X.MARK) : null;
+    if(!si && !ab) return;
+    uk = n > 10 ? ukNum(n) : String(n);
+    wo = {id: "#num" + n, si: si || ab, uk: [uk], forms: [], kind: "num", num: String(n)};
+    keys.forEach(function(k){
+      if(!/^\d/.test(k) && X.reserved[norm(k)]) return;
+      X.addKey(k, si || ab, true);
+      if(si) X.reg(k, si, "", "num", "", wo);                                          // main form
+      if(ab) X.reg(k, ab, "abbr", "num", "", wo);                                      // second variant: abbreviation
+    });
+    if(n > 10){
+      if(si) X.rreg(si.replace(/:/g, " "), uk, "", "num", wo, true);                   // colons are read as spaces (see splitHy)
+      if(ab) X.rreg(ab, uk, "abbr", "num", wo, true);
+    }
+  }
+  function addNumbers(gen, rreg, reg, addKey, reserved){
+    var W = {}, c = numCfg(), NS = Object.create(null), n, uk, keys, d;
+    words.forEach(function(w){ var d = parseInt(w.num, 10); if(kindOf(w) === "num" && d >= 0 && d <= 10 && !W[d]) W[d] = w.si.toLowerCase(); });
+    for(d = 0; d <= 10; d++) if(W[d] && !NS[norm(W[d])]) NS[norm(W[d])] = d;
+    var AB = Object.create(null), L;
+    for(d = 1; d <= 9; d++){
+      if(!W[d]) continue;
+      L = Array.from(W[d])[0].toUpperCase();
+      AB[L] = AB[L] === undefined ? d : -1;
+    }
+    var MARK = abbrMarks({ro: c.ro, fan: c.fan, thou: c.thou, mil: c.mil, bil: c.bil}), MK = Object.create(null);
+    MARK.forEach(function(m){ if(m) Array.from(m).forEach(function(ch){ MK[ch] = 1; }); });
+    NUMCTX = {W: W, c: c, NS: NS, AB: AB, MARK: MARK, MK: MK, so: norm(c.so), ro: norm(c.ro), fan: norm(c.fan),
+      thou: c.thou === null ? "" : norm(c.thou), mil: c.mil === null ? "" : norm(c.mil), bil: c.bil === null ? "" : norm(c.bil),
+      addKey: addKey, reg: reg, rreg: rreg, reserved: reserved};
+    for(n = 0; n <= 9999; n++){
+      keys = [String(n)];
+      if(n > 10){
+        uk = ukNum(n);
+        keys.push(uk);
+        if(n >= 1000 && n < 2000) keys.push(uk.replace(/^тисяча/, "одна тисяча"));
+      }
+      numPut(n, keys);
+    }
+  }
+  // numbers that are too many to be prepared in advance are added while the text is being translated
+  function ensureNumFwd(text){
+    var X = NUMCTX, re = /(?<!\d)(?:\d{1,3}(?: \d{3})+|\d+)(?!\d)/g, m, raw, n, parts, chain = [], flush;
+    if(!X) return;
+    while((m = re.exec(text))){
+      raw = m[0];
+      n = parseInt(raw.replace(/ /g, ""), 10);
+      if(raw.length >= 4 && n >= 1000 && n < 1e12 && !cand[norm(raw)]) numPut(n, [raw]);
+    }
+    flush = function(){
+      var s, l, tk, v, key;
+      for(s = 0; s < chain.length; s++){
+        for(l = 1; l <= 25 && s + l <= chain.length; l++){
+          if(!UK_VOC[ukKey(chain[s + l - 1])]) break;
+          tk = chain.slice(s, s + l); v = parseUk(tk);
+          if(v === null || v < 1000) continue;
+          key = tk.join(" ");
+          if(!cand[norm(key)]) numPut(v, [key]);
+        }
+      }
+      chain = [];
+    };
+    parts = text.match(TOK) || [];
+    parts.forEach(function(q){
+      if(isW(q)) chain.push(q);
+      else if(!/^\s+$/.test(q)) flush();
+    });
+    flush();
+  }
+  function ensureNumRev(parts){
+    var X = NUMCTX, chain = [], flush;
+    if(!X) return;
+    flush = function(){
+      var s, l, tk, v;
+      for(s = 0; s < chain.length; s++){
+        for(l = 1; l <= 23 && s + l <= chain.length; l += 2){
+          tk = chain.slice(s, s + l).map(norm); v = parseSi(tk, X);
+          if(v !== null && v > 9999) numPut(v, []);
+        }
+      }
+      chain = [];
+    };
+    parts.forEach(function(q){
+      if(isW(q)){
+        chain.push(q);
+        var av = abbrBack(q, X);
+        if(av !== null && av > 9999) numPut(av, []);
+      } else if(!/^\s+$/.test(q)) flush();
+    });
+    flush();
   }
  
   function rebuild(){
@@ -1448,7 +1672,7 @@ var FIREBASE_CONFIG = {
     }
     function reg(u, si, c, k, asp, w){
       var key = norm(u), l = cand[key] || (cand[key] = []);
-      if(!l.some(function(x){ return x.si === si && x.c === (c || "") && x.asp === (asp || "") && x.w === w; })) l.push({si: si, c: c || "", k: k || "", asp: asp || "", w: w, rel: isRelC(c)});
+      if(!l.some(function(x){ return x.si === si && x.c === (c || "") && x.asp === (asp || "") && x.w === w; })) l.push({si: si, c: c || "", k: k || "", asp: asp || "", w: w, rel: isRelC(c) || c === "abbr"});
     }
     function rreg(si, uk, c, k, w, fin, asp){
       var key = norm(si), l = ridx[key] || (ridx[key] = []);
@@ -1519,7 +1743,7 @@ var FIREBASE_CONFIG = {
       }
     });
     // 4a. numerals 11-999 built from the words for 1-10
-    addNumbers(gen, rreg);
+    addNumbers(gen, rreg, reg, addKey, reserved);
     // 4b. reverse direction for the extra tenses
     if(tenseList().length){
       var rrp = function(si, uk, c, k, w2, fin, asp, post){ rreg(si, post ? post(uk) : uk, c, k, w2, fin, asp); };
@@ -1544,6 +1768,11 @@ var FIREBASE_CONFIG = {
   }
  
   // keep the capitalization of the Ukrainian word
+  // the abbreviation of a number keeps its own capitals whatever the case of the source
+  function caseFor(c, text, src){
+    if(c && c.k === "num" && c.c === "abbr") return c.si ? text : matchCase(text, src.toLowerCase());
+    return matchCase(text, src);
+  }
   function matchCase(si, src){
     if(!si) return si;
     var letters = src.replace(/[^\p{L}]/gu, "");
@@ -1570,6 +1799,7 @@ var FIREBASE_CONFIG = {
             gpr:"дієприслівник теперішнього часу", gpa:"дієприслівник минулого часу"};
   var DEG = {c: "вищий ступінь", s: "найвищий ступінь", a: "дієприкметник активний", p: "дієприкметник пасивний"};
   function labelOf(x){
+    if(x.k === "num") return x.c === "abbr" ? "абревіатура" : "основна форма";
     if(x.k === "adv") return "прислівник" + (DEG[x.c] ? ", " + DEG[x.c] : "");
     if(x.k === "adj" && x.c && x.c.length === 3) return (CN[x.c[0]] || "") + ", " + (x.c[1] === "s" ? "одн." : "множ.") + " · " + (DEG[x.c[2]] || "");
     if(!x.c) return "основна форма";
@@ -1588,7 +1818,7 @@ var FIREBASE_CONFIG = {
     var map = Object.create(null), arr = [];
     list.forEach(function(c){
       var t = textOf(c), g = map[t];
-      if(!g){ g = map[t] = {text: matchCase(t, src), id: t, labels: [], on: false, ws: [], rel: true}; arr.push(g); }
+      if(!g){ g = map[t] = {text: caseFor(c, t, src), id: t, labels: [], on: false, ws: [], rel: true}; arr.push(g); }
       if(!isRel(c)) g.rel = false;
       var l = labelOf(c);
       if(g.labels.indexOf(l) < 0) g.labels.push(l);
@@ -1692,7 +1922,9 @@ var FIREBASE_CONFIG = {
   }
 
   function translateFwd(){
-    var text = $("source").value, parts = text.match(TOK) || [];
+    var text = $("source").value;
+    ensureNumFwd(text);
+    var parts = text.match(TOK) || [];
     var items = [], i = 0, Wf = [], posOf = {}, sentN = 0, brk = false;
     popData = [];
     parts.forEach(function(q, qi){
@@ -1725,9 +1957,10 @@ var FIREBASE_CONFIG = {
             if(!x){
               var dd = decide(cl, cu, null, out1);
               x = dd.best;
-              if(dd.amb){ amb = true; shown = dd.set.map(function(c){ return matchCase(c.si, srcText); }).join(" / "); cls = "amb"; }
+              if(dd.amb){ amb = true; shown = dd.set.map(function(c){ return caseFor(c, c.si, srcText); }).join(" / "); cls = "amb"; }
             }
             found = x.si;
+            if(x.k === "num" && x.c === "abbr") shown = x.si;
             var alts = groupAlts(cl, out1, x, srcText);
             if(amb) alts.forEach(function(a){ a.on = false; });
             info = {src: srcText, key: key, amb: amb, why: cu.why, alts: alts};
@@ -1775,6 +2008,7 @@ var FIREBASE_CONFIG = {
 
   function translateRev(){
     var text = $("source").value, parts = splitHy(text.match(TOK) || []), items = [], i = 0;
+    ensureNumRev(parts);
     popData = [];
     while(i < parts.length){
       var p = parts[i];
@@ -1814,12 +2048,12 @@ var FIREBASE_CONFIG = {
         if(it.c.length > 1){
           var dd = decide(it.c, cu, null, textOf);
           x = dd.best;
-          if(dd.amb){ amb = true; shown = dd.set.map(function(c){ return matchCase(textOf(c), it.s); }).join(" / "); }
+          if(dd.amb){ amb = true; shown = dd.set.map(function(c){ return caseFor(c, textOf(c), it.s); }).join(" / "); }
         } else x = it.c[0];
       }
       var alts = groupAlts(it.c, textOf, x, it.s);
       if(amb) alts.forEach(function(a){ a.on = false; });
-      out += spanOf({src: it.s, key: key, amb: amb, why: cu.why, alts: alts}, it.s, shown || matchCase(textOf(x), it.s), amb ? "amb" : "");
+      out += spanOf({src: it.s, key: key, amb: amb, why: cu.why, alts: alts}, it.s, shown || caseFor(x, textOf(x), it.s), amb ? "amb" : "");
     });
     $("result").innerHTML = text.trim() ? out : "";
   }
@@ -2050,7 +2284,7 @@ var FIREBASE_CONFIG = {
     var num = "";
     if(kind === "num"){
       var nv = parseInt($("numInput").value, 10);
-      if(!(nv >= 1 && nv <= 10)){ setMsg("Для числівника вкажіть, яке це число: від 1 до 10."); return; }
+      if(!(nv >= 0 && nv <= 10)){ setMsg("Для числівника вкажіть, яке це число: від 0 до 10."); return; }
       num = String(nv);
     }
     if(!si || !uk.length){ setMsg("Заповніть слово і його переклад."); return; }
@@ -2243,7 +2477,7 @@ var FIREBASE_CONFIG = {
       var el = $("end_" + r.k);
       if(document.activeElement !== el) el.value = endings[r.k] || "";
     });
-    ["adjcmp", "adjsup", "advend", "adjnom", "futword", "condword", "numro", "numso", "numfan", "numthou"].forEach(function(k){
+    ["adjcmp", "adjsup", "advend", "adjnom", "futword", "condword", "numro", "numso", "numfan", "numthou", "nummil", "numbil"].forEach(function(k){
       var el = $("end_" + k);
       if(el && document.activeElement !== el) el.value = endings[k] || "";
     });
