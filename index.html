@@ -174,6 +174,8 @@ li span{overflow-wrap:anywhere}
         <option value="f">жіночий</option>
         <option value="n">середній</option>
       </select>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;cursor:pointer"><input type="checkbox" id="sameChk" style="width:auto;margin:0"> Є два (або більше) відмінки з однаковою формою: життя, щастя, здоров'я</label>
+      <p class="note" style="margin:4px 0 0">Для такого слова переклад показує всі варіанти (наприклад, називний і родовий через « / »), а не один за контекстом.</p>
     </div>
     <div id="derBox" hidden>
       <p class="note" style="margin:10px 0 0"><b>Похідні слова.</b> Сітонські форми утворюються зі спільних закінчень (розділ «Закінчення слів»). Вписуйте лише українські слова.</p>
@@ -358,7 +360,7 @@ var FIREBASE_CONFIG = {
  
   function kindOf(w){ return w.kind || (w.verb ? "verb" : ""); }
   function putWord(w){
-    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", t: w.t || Date.now()};
+    var data = {si: w.si, uk: w.uk, forms: w.forms || [], kind: kindOf(w), verb: kindOf(w) === "verb", nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", same: w.same || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", t: w.t || Date.now()};
     if(wordsCol){ wordsCol.doc(w.id).set(data).catch(onErr); return; }
     data.id = w.id;
     var i = words.map(function(x){ return x.id; }).indexOf(w.id);
@@ -460,6 +462,7 @@ var FIREBASE_CONFIG = {
   // one shared ending per case for nouns, adjectives and pronouns
   function draw(kind, k){ return (((endings.all || {})[k]) || "").trim(); }
   function dend(kind, k){ return ev(draw(kind, k)); }
+  function ni0same(w){ return !!w.same; }
   function addDecl(w, kind, addExact){
     var stemSi = siStem(w.si, w.nom);
     w.uk.forEach(function(u){
@@ -475,6 +478,21 @@ var FIREBASE_CONFIG = {
           var k2 = kk[0] === "l" ? "g" + kk[1] : kk, e = dend(kind, k2);   // locative = genitive
           if(e !== null) addExact(norm(ni.f[kk]), stemSi + e, k2);
         });
+      }
+      // a noun with two or more identical cases (життя, щастя, здоров'я): all its forms come from the neuter pattern
+      if(kind === "noun" && ni0same(w)){
+        var nis = nounInfo(w), lemS = n;
+        CKEYS.forEach(function(ck){
+          var e2 = dend(kind, ck.k), f2;
+          if(e2 === null) return;
+          f2 = inflNoun(lemS, ck.k, nis.gender, nis.obl, nis.plu, nis);
+          if(f2) addExact(norm(f2), stemSi + e2, ck.k);
+        });
+        ["ls", "lp"].forEach(function(lk){   // locative = genitive
+          var el = dend(kind, "g" + lk[1]), fl = inflNoun(lemS, lk, nis.gender, nis.obl, nis.plu, nis);
+          if(el !== null && fl) addExact(norm(fl), stemSi + el, "g" + lk[1]);
+        });
+        if(nis.ap && /я$/.test(lemS)){ var eg = dend(kind, "gs"); if(eg !== null) addExact(lemS.slice(0, -1) + "ї", stemSi + eg, "gs"); }
       }
       // singular cases first, so an ambiguous form (зими) is read as singular
       CKEYS.filter(function(c){ return c.k[1] === "s"; }).concat(CKEYS.filter(function(c){ return c.k[1] === "p"; })).forEach(function(ck){
@@ -1021,6 +1039,14 @@ var FIREBASE_CONFIG = {
         if(best.s - a.s < MARGIN && set.every(function(y){ return outOf(y) !== outOf(a.x); })) set.push(a.x);
       });
     }
+    // a word marked as having identical cases: all its variants are shown, whatever the context says
+    if(best.x.w && best.x.w.same){
+      arr.forEach(function(a){
+        if(a.x.w !== best.x.w || isRel(a.x) || outOf(a.x) === outOf(best.x) || (a.x.c || "")[1] !== (best.x.c || "")[1]) return;
+        if(set.every(function(y){ return outOf(y) !== outOf(a.x); })) set.push(a.x);
+      });
+      if(set.length > 1) amb = true;
+    }
     return {best: best.x, amb: amb, set: set.slice(0, 4)};
   }
   function pickCand(list, cu){ return decide(list, cu, null, function(c){ return c.si || c.uk; }).best; }
@@ -1164,7 +1190,7 @@ var FIREBASE_CONFIG = {
   function nounInfo(w){
     var lem = norm(w.uk[0] || ""), b = NOUN_DB[lem] || {};
     return {gender: w.gender || b.g || (/ість$/.test(lem) ? "f" : ""), obl: w.obl || b.obl || "", plu: w.plu || b.plu || "",
-            u: !!b.u, an: !!b.an, f: b.f || null};
+            u: !!b.u, an: !!b.an, f: b.f || null, same: !!w.same, ap: /['’ʼ]я$/.test(w.uk[0] || "")};
   }
   function genderOf(l){ return /[ая]$/.test(l) ? "f" : /[оеє]$/.test(l) ? "n" : "m"; }
   function inflNoun(lem, ck, gender, obl, plu, ni){
@@ -1196,7 +1222,7 @@ var FIREBASE_CONFIG = {
                        : pick({n: st + ya, g: st, d: st + "ам", a: st + ya, i: st + "ами", l: st + "ах", v: st + ya});
     }
     // neuter abstract nouns: знання, питання, життя, речення
-    if(/([нтлзсцчджш])\1я$/.test(lem) && gender !== "f"){
+    if((/([нтлзсцчджш])\1я$/.test(lem) || (ni.same && /я$/.test(lem))) && gender !== "f"){
       st = lem.slice(0, -1);
       return n === "s" ? pick({n: lem, g: lem, d: st + "ю", a: lem, i: st + "ям", l: st + "і", v: lem})
                        : pick({n: lem, g: st.slice(0, -1) + "ь", d: st + "ям", a: lem, i: st + "ями", l: st + "ях", v: lem});
@@ -1688,6 +1714,7 @@ var FIREBASE_CONFIG = {
       if(reserved[norm(u)]) return;
       addKey(u, si, exactOnly); reg(u, si, c, k, asp, w);
     }
+    var lateSame = [];
     // 1. extra forms typed by the user
     ALL.forEach(function(w){
       (w.forms || []).forEach(function(f){
@@ -1703,7 +1730,11 @@ var FIREBASE_CONFIG = {
         var rs = reflOf(w), gk = function(u, si, ex, c, asp, post){ gen(post ? post(u) : u, si, ex, c, "verb", asp, w); };
         if(rs) addVerb(reflBase(w), reflKeys(rs, gk)); else addVerb(w, gk);
       }
-      else if(k === "noun" || k === "adj") addDecl(w, k, function(u, si, c){ gen(u, k === "adj" ? w.si : si, true, c, k, "", w); });   // adjectives do not decline in Sitono
+      else if(k === "noun" || k === "adj") addDecl(w, k, function(u, si, c){
+        // a form equal to the word itself (щастя = називний = родовий) is not dropped as «reserved»: it is added after the word, as another case
+        if(k === "noun" && w.same && w.uk.some(function(x){ return norm(x) === norm(u); })) lateSame.push({u: u, si: si, c: c, w: w});
+        else gen(u, k === "adj" ? w.si : si, true, c, k, "", w);   // adjectives do not decline in Sitono
+      });
       if(k === "adj") adjExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
       if(k === "adv") advExtras(w).forEach(function(x){ x.uk.forEach(function(u){ gen(u, x.si, true, x.c, x.k, "", w); }); });
     });
@@ -1721,6 +1752,7 @@ var FIREBASE_CONFIG = {
       w.uk.forEach(function(u){ addKey(u, w.si); reg(u, w.si, nomC, k, asp0, w); });
       if(w.uk.length) rreg(w.si, disp(w.uk[0]), nomC, k, w, false, asp0);
     });
+    lateSame.forEach(function(x){ addKey(x.u, x.si, true); reg(x.u, x.si, x.c, "noun", "", x.w); });
     // 4. reverse direction: sitonian forms -> ukrainian forms
     ALL.forEach(function(w){
       var k = kindOf(w), lem = disp(w.uk[0] || "");
@@ -1870,7 +1902,7 @@ var FIREBASE_CONFIG = {
   function hyRole(it){
     if(!it || !it.w || it.n !== 1) return "";
     var t = norm(it.src), only = function(k){ return it.ks.length > 0 && it.ks.every(function(x){ return x === k; }); };
-    if(PERSON[t]) return "subj";
+    if(PERSON[t] || t === "це") return "subj";
     if(PL[t] || SG[t] || QU[t]) return "det";
     if(only("adj")) return "adj";
     if(only("verb") || BYNUM[t] !== undefined) return "verb";
@@ -1883,23 +1915,50 @@ var FIREBASE_CONFIG = {
     var meet = function(a, b){ return !a.length || !b.length || a.some(function(x){ return b.indexOf(x) > -1; }); };
     return meet(mn, hn) && meet(uniq(m.cl.map(caseOf)), uniq(h.cl.map(caseOf)));
   }
-  /* adjective + noun -> «adj:noun» (no space); noun or pronoun + adjective -> «noun'a adj» */
+  /* adjective + noun -> «adj:noun» (no space); noun or pronoun + adjective -> «noun'a adj»; «це» + noun or adjective -> «це'a ...» (also «це є ...») */
   function hyRender(items){
     var gap = function(a, b){ return a >= 0 && b < items.length && b === a + 2 && items[a].w && items[b].w && items[a + 1].sep !== undefined && /^\s+$/.test(items[a + 1].sep); };
     var rel = function(k){ return k >= 0 && k < items.length ? hyRole(items[k]) : ""; };
     var colon = {}, apos = {}, skip = {}, j;
     for(j = 0; j < items.length; j++){
-      if(rel(j) === "adj" && gap(j, j + 2) && (rel(j + 2) === "noun" || rel(j + 2) === "pron") && hyAgree(items[j], items[j + 2])){
+      if(rel(j) === "adj" && gap(j, j + 2) && (rel(j + 2) === "noun" || rel(j + 2) === "pron")){
         colon[j] = 1; skip[j + 1] = 1;
         if(items[j].info) items[j].info.hy = "Двокрапка: прикметник стоїть безпосередньо перед іменником чи займенником «" + items[j + 2].src + "».";
       }
     }
     for(j = 0; j < items.length; j++){
       var r = rel(j);
+      if(r === "subj" && !items[j].unk && norm(items[j].src) === "це"){
+        // «це» takes 'a before a noun or an adjective, also when «є» stands between them («це є красиве щось»); no agreement is checked
+        var tg = j + 2, be = gap(j, j + 2) && items[j + 2].w && norm(items[j + 2].src) === "є" && gap(j + 2, j + 4);
+        if(be) tg = j + 4;
+        var rt = rel(tg);
+        if((be || gap(j, tg)) && (rt === "adj" || rt === "noun" || rt === "pron")){
+          apos[j] = 1;
+          if(items[j].info) items[j].info.hy = "Додано 'a: після «це» " + (be ? "(через «є») " : "") + "стоїть " + (rt === "adj" ? "прикметник" : "іменник чи займенник") + " «" + items[tg].src + "».";
+        }
+        continue;
+      }
       if((r === "noun" || r === "pron" || r === "subj") && !items[j].unk && gap(j, j + 2) && rel(j + 2) === "adj" && !colon[j + 2] && hyAgree(items[j + 2], items[j])){
         apos[j] = 1;
         if(items[j].info) items[j].info.hy = "Додано 'a: одразу після слова стоїть прикметник «" + items[j + 2].src + "».";
       }
+    }
+    // a word that can be an adjective is followed by a word, but there is no colon: say why in its pop-up
+    var kn = function(it){ return it.ks.map(function(k){ return KIND_NAMES[k] || k; }).join(", "); };
+    for(j = 0; j < items.length; j++){
+      var A = items[j], B = items[j + 2], why = "";
+      if(!A || A.sep !== undefined || !A.w || A.unk || !A.info || !A.ks || A.ks.indexOf("adj") < 0 || colon[j] || apos[j]) continue;
+      if(!B || B.sep !== undefined || !B.w || B.unk) continue;
+      if(rel(j) !== "adj"){
+        if(A.n === 1 && A.ks.length > 1 && !PERSON[norm(A.src)] && !PL[norm(A.src)] && !SG[norm(A.src)] && !QU[norm(A.src)])
+          why = "слово «" + A.src + "» у словнику має ще й іншу частину мови (" + kn(A) + "), тому воно не вважається однозначним прикметником.";
+      } else if(!gap(j, j + 2)){
+        why = "між «" + A.src + "» і «" + B.src + "» є розділовий знак, або одне зі слів входить до словосполучення з кількох слів.";
+      } else if(rel(j + 2) !== "noun" && rel(j + 2) !== "pron"){
+        why = "слово «" + B.src + "» не розпізнане як іменник чи займенник" + (B.ks.length ? " (у словнику: " + kn(B) + ")" : "") + ".";
+      }
+      if(why) A.info.hy = "Двокрапки немає: " + why;
     }
     var out = "";
     items.forEach(function(it, i){
@@ -2233,7 +2292,7 @@ var FIREBASE_CONFIG = {
     }).filter(function(f){ return f.uk; });
   }
   function resetForm(){
-    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("aspectSel").value = ""; $("pfiInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true; $("cmpInput").value = ""; $("cmpBox").hidden = true; ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = ""; }); $("degSel").value = ""; $("ddegSel").value = ""; setDerBox(""); $("numInput").value = ""; $("numBox").hidden = true;
+    $("siInput").value = ""; $("ukInput").value = ""; $("forms").innerHTML = ""; $("kindSel").value = ""; $("presInput").value = ""; $("pastInput").value = ""; $("aspectSel").value = ""; $("pfiInput").value = ""; $("irr").hidden = true; $("nomInput").value = ""; $("nomBox").hidden = true; $("genderSel").value = ""; $("gendBox").hidden = true; $("oblInput").value = ""; $("pluInput").value = ""; $("stemBox").hidden = true; $("cmpInput").value = ""; $("cmpBox").hidden = true; ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = ""; }); $("degSel").value = ""; $("ddegSel").value = ""; setDerBox(""); $("numInput").value = ""; $("numBox").hidden = true; $("sameChk").checked = false;
     editId = null; $("saveBtn").textContent = "Зберегти";
   }
   function openForm(open){
@@ -2253,7 +2312,7 @@ var FIREBASE_CONFIG = {
     $("nomInput").value = w.nom || "";
     $("genderSel").value = w.gender || "";
     $("gendBox").hidden = kindOf(w) !== "noun";
-    $("numInput").value = w.num || ""; $("numBox").hidden = kindOf(w) !== "num";
+    $("numInput").value = w.num || ""; $("numBox").hidden = kindOf(w) !== "num"; $("sameChk").checked = !!w.same;
     $("oblInput").value = w.obl || ""; $("pluInput").value = w.plu || ""; $("cmpInput").value = w.cmpuk || "";
     $("cmpBox").hidden = kindOf(w) !== "adj" && kindOf(w) !== "adv";
     ["dadj","dadjc","dadv","dadvc"].forEach(function(f){ $(f + "Input").value = w[f] || ""; });
@@ -2287,16 +2346,17 @@ var FIREBASE_CONFIG = {
       if(!(nv >= 0 && nv <= 10)){ setMsg("Для числівника вкажіть, яке це число: від 0 до 10."); return; }
       num = String(nv);
     }
+    var same = (kind === "noun" && $("sameChk").checked) ? "1" : "";
     if(!si || !uk.length){ setMsg("Заповніть слово і його переклад."); return; }
     var wasEdit = !!editId;
     var cur = wasEdit ? words.filter(function(w){ return w.id === editId; })[0] : null;
     if(cur){
-      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, num: num, pres: pres, pf: pf, pfi: pfi, past: past});
+      putWord({id: cur.id, t: cur.t, si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, num: num, same: same, pres: pres, pf: pf, pfi: pfi, past: past});
     } else {
       var existing = words.filter(function(w){ return norm(w.si) === norm(si); })[0];
       if(existing){
         var m = {id: existing.id, t: existing.t, si: existing.si, uk: existing.uk.slice(),
-                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", cmpuk: cmpuk || existing.cmpuk || "", dadj: dadj || existing.dadj || "", dadjc: dadjc || existing.dadjc || "", dadv: dadv || existing.dadv || "", dadvc: dadvc || existing.dadvc || "", deg: deg || existing.deg || "", ddeg: ddeg || existing.ddeg || "", num: num || existing.num || "", pres: pres || existing.pres || "", pf: pf || existing.pf || "", pfi: pfi || existing.pfi || "", past: past || existing.past || ""};
+                 forms: (existing.forms || []).slice(), kind: kindOf(existing) || kind, nom: nom || existing.nom || "", gender: gender || existing.gender || "", obl: obl || existing.obl || "", plu: plu || existing.plu || "", cmpuk: cmpuk || existing.cmpuk || "", dadj: dadj || existing.dadj || "", dadjc: dadjc || existing.dadjc || "", dadv: dadv || existing.dadv || "", dadvc: dadvc || existing.dadvc || "", deg: deg || existing.deg || "", ddeg: ddeg || existing.ddeg || "", num: num || existing.num || "", same: same || existing.same || "", pres: pres || existing.pres || "", pf: pf || existing.pf || "", pfi: pfi || existing.pfi || "", past: past || existing.past || ""};
         uk.forEach(function(u){
           if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u);
         });
@@ -2305,7 +2365,7 @@ var FIREBASE_CONFIG = {
         });
         putWord(m);
       } else {
-        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, num: num, pres: pres, pf: pf, pfi: pfi, past: past});
+        putWord({id: newId(), t: Date.now(), si: si, uk: uk, forms: forms, kind: kind, nom: nom, gender: gender, obl: obl, plu: plu, cmpuk: cmpuk, dadj: dadj, dadjc: dadjc, dadv: dadv, dadvc: dadvc, deg: deg, ddeg: ddeg, num: num, same: same, pres: pres, pf: pf, pfi: pfi, past: past});
       }
     }
     resetForm();
@@ -2513,7 +2573,7 @@ var FIREBASE_CONFIG = {
   }
   $("migBtn").onclick = function(){
     missingLocal().forEach(function(w,i){
-      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""});
+      putWord({id: newId(), t: Date.now() + i, si: w.si, uk: w.uk || [], forms: w.forms || [], kind: kindOf(w), nom: w.nom || "", gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", same: w.same || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""});
     });
     var le = localEndings();
     if(hasEnd(le) && !hasEnd(endings)){ endings = le; persistEndings(); fillEnd(); }
@@ -2537,7 +2597,7 @@ var FIREBASE_CONFIG = {
       wordsCol.orderBy("t").onSnapshot(function(snap){
         words = snap.docs.map(function(x){
           var o = x.data() || {};
-          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", cmpuk: o.cmpuk || "", dadj: o.dadj || "", dadjc: o.dadjc || "", dadv: o.dadv || "", dadvc: o.dadvc || "", deg: o.deg || "", ddeg: o.ddeg || "", num: o.num || "", pres: o.pres || "", pf: o.pf || "", pfi: o.pfi || "", past: o.past || "", t: o.t || 0};
+          return {id: x.id, si: o.si || "", uk: o.uk || [], forms: o.forms || [], kind: o.kind || (o.verb ? "verb" : ""), nom: o.nom || "", gender: o.gender || "", obl: o.obl || "", plu: o.plu || "", cmpuk: o.cmpuk || "", dadj: o.dadj || "", dadjc: o.dadjc || "", dadv: o.dadv || "", dadvc: o.dadvc || "", deg: o.deg || "", ddeg: o.ddeg || "", num: o.num || "", same: o.same || "", pres: o.pres || "", pf: o.pf || "", pfi: o.pfi || "", past: o.past || "", t: o.t || 0};
         });
         if(!snap.metadata.fromCache) loaded = true;
         refresh(); offerMigration();
@@ -2555,7 +2615,7 @@ var FIREBASE_CONFIG = {
   function ioMsg(t){ $("ioMsg").textContent = t; }
   function exportData(){
     return JSON.stringify({app: "sitono", version: 1, endings: endings, words: words.map(function(w){
-      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", nom: w.nom || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", forms: w.forms || []};
+      return {si: w.si, uk: w.uk, kind: kindOf(w), gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", same: w.same || "", nom: w.nom || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || "", forms: w.forms || []};
     })}, null, 2);
   }
   function exportFile(){
@@ -2613,12 +2673,12 @@ var FIREBASE_CONFIG = {
         uk.forEach(function(u){ if(m.uk.map(norm).indexOf(norm(u)) < 0) m.uk.push(u); });
         m.forms = m.forms || [];
         forms.forEach(function(f){ if(m.forms.map(function(x){ return norm(x.uk); }).indexOf(norm(f.uk)) < 0) m.forms.push(f); });
-        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || ""; m.cmpuk = m.cmpuk || w.cmpuk || ""; m.dadj = m.dadj || w.dadj || ""; m.dadjc = m.dadjc || w.dadjc || ""; m.dadv = m.dadv || w.dadv || ""; m.dadvc = m.dadvc || w.dadvc || ""; m.deg = m.deg || w.deg || ""; m.ddeg = m.ddeg || w.ddeg || ""; m.num = m.num || w.num || "";
+        m.kind = kindOf(m) || w.kind || ""; m.nom = m.nom || w.nom || ""; m.gender = m.gender || w.gender || ""; m.obl = m.obl || w.obl || ""; m.plu = m.plu || w.plu || ""; m.cmpuk = m.cmpuk || w.cmpuk || ""; m.dadj = m.dadj || w.dadj || ""; m.dadjc = m.dadjc || w.dadjc || ""; m.dadv = m.dadv || w.dadv || ""; m.dadvc = m.dadvc || w.dadvc || ""; m.deg = m.deg || w.deg || ""; m.ddeg = m.ddeg || w.ddeg || ""; m.num = m.num || w.num || ""; m.same = m.same || w.same || "";
         m.pres = m.pres || w.pres || ""; m.pf = m.pf || w.pf || ""; m.pfi = m.pfi || w.pfi || ""; m.past = m.past || w.past || "";
         if(!touched[key]) updated++;
       } else {
         m = byKey[key] = {id: newId(), t: Date.now() + added, si: si, uk: uk, forms: forms, kind: w.kind || "", nom: w.nom || "",
-                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""};
+                          gender: w.gender || "", obl: w.obl || "", plu: w.plu || "", cmpuk: w.cmpuk || "", dadj: w.dadj || "", dadjc: w.dadjc || "", dadv: w.dadv || "", dadvc: w.dadvc || "", deg: w.deg || "", ddeg: w.ddeg || "", num: w.num || "", same: w.same || "", pres: w.pres || "", pf: w.pf || "", pfi: w.pfi || "", past: w.past || ""};
         added++;
       }
       touched[key] = 1;
