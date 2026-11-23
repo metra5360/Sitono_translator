@@ -1920,8 +1920,15 @@ var FIREBASE_CONFIG = {
     var gap = function(a, b){ return a >= 0 && b < items.length && b === a + 2 && items[a].w && items[b].w && items[a + 1].sep !== undefined && /^\s+$/.test(items[a + 1].sep); };
     var rel = function(k){ return k >= 0 && k < items.length ? hyRole(items[k]) : ""; };
     var colon = {}, apos = {}, skip = {}, j;
+    // a word that is an adjective and also a form of a noun (права = правий + право): it counts as an adjective when it agrees with the next word
+    var adjOnly = function(it){ return {cl: (it.cl || []).filter(function(x){ return x.k === "adj"; })}; };
+    var mixedAdj = function(k){
+      var it = items[k], r0 = rel(k), q = it && it.src ? norm(it.src) : "";
+      return !!it && it.sep === undefined && !!it.w && it.n === 1 && !it.unk && !!it.ks && it.ks.indexOf("adj") > -1 && it.ks.length > 1 &&
+             (r0 === "noun" || r0 === "pron" || r0 === "") && !PERSON[q] && !PL[q] && !SG[q] && !QU[q];
+    };
     for(j = 0; j < items.length; j++){
-      if(rel(j) === "adj" && gap(j, j + 2) && (rel(j + 2) === "noun" || rel(j + 2) === "pron")){
+      if((rel(j) === "adj" || (mixedAdj(j) && hyAgree(adjOnly(items[j]), items[j + 2] || {cl: []}))) && gap(j, j + 2) && (rel(j + 2) === "noun" || rel(j + 2) === "pron")){
         colon[j] = 1; skip[j + 1] = 1;
         if(items[j].info) items[j].info.hy = "Двокрапка: прикметник стоїть безпосередньо перед іменником чи займенником «" + items[j + 2].src + "».";
       }
@@ -1945,18 +1952,24 @@ var FIREBASE_CONFIG = {
       }
     }
     // a word that can be an adjective is followed by a word, but there is no colon: say why in its pop-up
+    var NUMN = {s: "однина", p: "множина"};
+    var descr = function(it){
+      var cs = uniq((it.cl || []).map(caseOf)).map(function(c){ return CN[c] || c; }).join(", ") || "не визначено";
+      var ns = uniq((it.cl || []).map(numOf)).map(function(c){ return NUMN[c] || c; }).join(", ") || "не визначено";
+      return "відмінок: " + cs + "; число: " + ns;
+    };
     var kn = function(it){ return it.ks.map(function(k){ return KIND_NAMES[k] || k; }).join(", "); };
     for(j = 0; j < items.length; j++){
       var A = items[j], B = items[j + 2], why = "";
       if(!A || A.sep !== undefined || !A.w || A.unk || !A.info || !A.ks || A.ks.indexOf("adj") < 0 || colon[j] || apos[j]) continue;
       if(!B || B.sep !== undefined || !B.w || B.unk) continue;
-      if(rel(j) !== "adj"){
-        if(A.n === 1 && A.ks.length > 1 && !PERSON[norm(A.src)] && !PL[norm(A.src)] && !SG[norm(A.src)] && !QU[norm(A.src)])
-          why = "слово «" + A.src + "» у словнику має ще й іншу частину мови (" + kn(A) + "), тому воно не вважається однозначним прикметником.";
-      } else if(!gap(j, j + 2)){
+      if(rel(j) !== "adj" && !mixedAdj(j)) continue;
+      if(!gap(j, j + 2)){
         why = "між «" + A.src + "» і «" + B.src + "» є розділовий знак, або одне зі слів входить до словосполучення з кількох слів.";
       } else if(rel(j + 2) !== "noun" && rel(j + 2) !== "pron"){
         why = "слово «" + B.src + "» не розпізнане як іменник чи займенник" + (B.ks.length ? " (у словнику: " + kn(B) + ")" : "") + ".";
+      } else if(rel(j) !== "adj"){
+        why = "«" + A.src + "» у словнику є і прикметником, і іншою частиною мови (" + kn(A) + "), тому двокрапка ставиться лише коли воно узгоджується з наступним словом. Не збігаються: прикметник — " + descr(adjOnly(A)) + "; «" + B.src + "» — " + descr(B) + ".";
       }
       if(why) A.info.hy = "Двокрапки немає: " + why;
     }
