@@ -132,6 +132,10 @@ li span{overflow-wrap:anywhere}
     <div class="erow"><label for="end_advend" style="margin:0">Прислівник: закінчення</label><input type="text" id="end_advend" data-k="advend" autocomplete="off"></div>
     <div class="erow"><label for="end_adjnom" style="margin:0">Прикметник, утворений від іншого слова: закінчення називного</label><input type="text" id="end_adjnom" data-k="adjnom" autocomplete="off"></div>
     <p class="note">Слово можна пов'язати з прикметником і прислівником (добро, добрий, добре): у формі слова є розділ «Похідні слова». Сітонські форми утворюються так: основа слова + закінчення прислівника або закінчення називного прикметника з цього розділу.</p>
+    <h3>Питання</h3>
+    <p class="note">Питальні слова (хто, де, коли, чому…) записуйте у словник з типом «Питальне слово». Якщо речення закінчується на «?» і містить питальне слово, програма ставить його в кінець питання, перед «?». Якщо питального слова немає, у кінець додається слово нижче. Якщо воно вже є в питанні, речення не змінюється. «-» вимикає правило.</p>
+    <div class="erow"><label for="end_qword" style="margin:0">Слово, що додається, якщо питального слова немає (українською)</label><input type="text" id="end_qword" data-k="qword" placeholder="чи" autocomplete="off"></div>
+    <p class="note" id="qwStatus"></p>
     <h3>Числівники</h3>
     <p class="note">Слова для чисел від 0 до 10 записуйте у словник з типом «Числівник». Решта чисел (до 999 999 999 999) складається з них. Десяток: слово цифри + закінчення десятків (п'ять → 50). Сотня: слово цифри + сполучне слово + слово «сто» (2 → 200). Тисячі, мільйони, мільярди: число від 1 до 999 пишеться як завжди, а до нього дописується слово розряду (3 → 3000, 20 → 20 000, 200 → 200 000), одиниця перед розрядом не пишеться (1000 → лише слово «тисяча»), а розряди розділяються через «:so:». Складене число: старша частина + сполучне слово + решта. У числах менших за сто двокрапка ставиться, лише якщо число не кругле (54 → 5ro:so:4, а 50 → 5ro). У числах більших за сто двокрапки навколо сполучного слова є завжди, навіть якщо число кругле (250 → detsofan:so:5ro). Порожнє поле означає стандартне значення. Від числа 11 є й другий варіант перекладу: абревіатура з великих перших літер слів цифр числа. Після літери стоїть мала позначка розряду, яку програма бере сама з налаштувань вище: перша літера слова «сто» — для сотень, слова «тисяча» — для тисяч, «мільйон» — для мільйонів, «мільярд» — для мільярдів; для десятків і сотень цих розрядів літери складаються (десятки тисяч = літера закінчення десятків + літера тисяч). Десятки позначаються першою літерою закінчення десятків лише тоді, коли одиниць немає. Нулі не пишуться (для ro, fan, ŧou: 28 → ÐO, 208 → ÐfO, 2008 → ÐŧO, 280 → ÐfOr).</p>
     <div class="erow"><label for="end_numro" style="margin:0">Закінчення десятків (50 = 5 + …)</label><input type="text" id="end_numro" data-k="numro" placeholder="ro" autocomplete="off"></div>
@@ -159,6 +163,7 @@ li span{overflow-wrap:anywhere}
       <option value="adv">Прислівник (добре — краще — найкраще)</option>
       <option value="pron">Займенник або слово з власними формами</option>
       <option value="num">Числівник (число від 0 до 10)</option>
+      <option value="qw">Питальне слово (хто, де, коли…)</option>
     </select>
     <p class="note" style="margin:6px 0 0">Закінчення для кожного типу задаються в розділі «Закінчення слів».</p>
     <div id="numBox" hidden>
@@ -434,7 +439,7 @@ var FIREBASE_CONFIG = {
   }
  
   /* ---------- noun / adjective / pronoun declension ---------- */
-  var KIND_NAMES = {verb:"дієслово", noun:"іменник", adj:"прикметник", adv:"прислівник", pron:"займенник", num:"числівник"};
+  var KIND_NAMES = {verb:"дієслово", noun:"іменник", adj:"прикметник", adv:"прислівник", pron:"займенник", num:"числівник", qw:"питальне слово"};
   var CASES = [["n","Називний"],["g","Родовий"],["d","Давальний"],["a","Знахідний"],["i","Орудний"]];
   var CKEYS = [];
   CASES.forEach(function(c){ ["s","p"].forEach(function(n){ CKEYS.push({k: c[0] + n, label: c[1] + (n === "s" ? ", одн." : ", множ.")}); }); });
@@ -1391,6 +1396,76 @@ var FIREBASE_CONFIG = {
   }
   var cand = Object.create(null), ridx = Object.create(null), maxSi = 1;
  
+  /* ---------- questions: the question word goes to the end of the question; a question without one gets the default word ---------- */
+  var qwSet = {}, qwMax = 1;
+  function qwordMain(){
+    var v = ev(endings.qword);
+    return v === null ? "чи" : v.trim();
+  }
+  function buildQw(){
+    qwSet = {}; qwMax = 1;
+    words.forEach(function(w){
+      if(kindOf(w) !== "qw") return;
+      (w.uk || []).forEach(function(u){
+        var k = norm(u);
+        if(!k) return;
+        qwSet[k] = 1; qwMax = Math.max(qwMax, k.split(" ").length);
+      });
+    });
+  }
+  function addQuestionWord(text){
+    var main = qwordMain(), mk;
+    if(!main || text.indexOf("?") < 0 || !cand[norm(main)]) return text;
+    mk = norm(main);
+    return text.replace(/([^.!?…\n]*[^\s.!?…\n])\s*(\?+)/g, function(m, s, q){
+      var parts = s.match(TOK) || [], found = [], p, n, j, ix, a, ok, key, i, fi = 0, keep = [], moved = [], rest, lw, lead, mv;
+      for(p = 0; p < parts.length; p++){
+        if(!isW(parts[p])) continue;
+        for(n = Math.max(qwMax, mk.split(" ").length); n >= 1; n--){
+          a = []; ok = true;
+          for(j = 0; j < n; j++){
+            ix = p + 2 * j;
+            if(ix >= parts.length || !isW(parts[ix]) || (j && !/^\s+$/.test(parts[ix - 1]))){ ok = false; break; }
+            a.push(parts[ix]);
+          }
+          if(!ok) continue;
+          key = norm(a.join(" "));
+          if(key === mk) return m;                                  // the question already has the default word
+          if(qwSet[key]){
+            found.push({from: p, to: p + 2 * (n - 1), text: parts.slice(p, p + 2 * n - 1).join("")});
+            p += 2 * (n - 1);
+            break;
+          }
+        }
+      }
+      lw = s.match(/^\s*/)[0];
+      if(!found.length) return s + " " + main + q;
+      for(i = 0; i < parts.length; i++){
+        if(fi < found.length && i === found[fi].from){
+          moved.push(found[fi].text); i = found[fi].to; fi++;
+          if(i + 1 < parts.length && /^\s+$/.test(parts[i + 1])) i++;
+          else if(keep.length && /^\s+$/.test(keep[keep.length - 1])) keep.pop();
+          continue;
+        }
+        keep.push(parts[i]);
+      }
+      rest = keep.join("").replace(/^\s+|\s+$/g, "");
+      if(!rest) return m;
+      lead = parts.slice(0, found[0].from).every(function(x){ return !isW(x); });
+      mv = moved[0];
+      if(lead && mv.charAt(0) !== mv.charAt(0).toLowerCase()){          // the capital letter of the sentence stays at its beginning
+        moved[0] = mv.charAt(0).toLowerCase() + mv.slice(1);
+        rest = rest.replace(/\p{L}/u, function(c){ return c.toUpperCase(); });
+      }
+      return lw + rest + " " + moved.join(" ") + q;
+    });
+  }
+  function updateQwStatus(){
+    var el = document.getElementById("qwStatus"), main = qwordMain(), n = Object.keys(qwSet).length;
+    if(!el) return;
+    el.textContent = (!main ? "Правило вимкнене." : cand[norm(main)] ? "Слово «" + main + "» знайдено у словнику." : "Слова «" + main + "» немає у словнику, тому питальні речення не змінюються. Додайте його у словник.") +
+      " Питальних слів у словнику: " + n + ".";
+  }
   /* ---------- numerals: 1-10 are dictionary words (type "num"); everything up to 999 999 999 999 is built from them ---------- */
   var UK_U = ["", "один", "два", "три", "чотири", "п'ять", "шість", "сім", "вісім", "дев'ять"];
   var UK_T = ["десять", "одинадцять", "дванадцять", "тринадцять", "чотирнадцять", "п'ятнадцять", "шістнадцять", "сімнадцять", "вісімнадцять", "дев'ятнадцять"];
@@ -1776,6 +1851,8 @@ var FIREBASE_CONFIG = {
     });
     // 4a. numerals 11-999 built from the words for 1-10
     addNumbers(gen, rreg, reg, addKey, reserved);
+    buildQw();
+    updateQwStatus();
     // 4b. reverse direction for the extra tenses
     if(tenseList().length){
       var rrp = function(si, uk, c, k, w2, fin, asp, post){ rreg(si, post ? post(uk) : uk, c, k, w2, fin, asp); };
@@ -1933,22 +2010,38 @@ var FIREBASE_CONFIG = {
         if(items[j].info) items[j].info.hy = "Двокрапка: прикметник стоїть безпосередньо перед іменником чи займенником «" + items[j + 2].src + "».";
       }
     }
+    // between a noun and its adjective: «не» stays in place («життя'a не погане»); another word (дуже, ще…) is moved after the adjective («життя'a погане дуже»);
+    // after «це» also «є» stays in place. Verbs, nouns, pronouns, adjectives and conjunctions between them stop the rule.
+    var STOPW = {"і": 1, "й": 1, "та": 1, "а": 1, "але": 1, "або": 1, "чи": 1, "що": 1, "щоб": 1, "бо": 1, "якщо": 1, "коли": 1, "як": 1, "ніби": 1, "мов": 1};
+    var canMove = function(it){ return !!it && it.sep === undefined && !!it.w && !it.unk && it.n === 1 && hyRole(it) === "" && !STOPW[norm(it.src)]; };
+    var skipW = function(k, stay){ while(gap(k, k + 2) && (stay[norm(items[k + 2].src)] || canMove(items[k + 2]))) k += 2; return k; };
+    var SKIP_N = {"не": 1}, SKIP_THIS = {"не": 1, "є": 1}, mv = {}, after = {};
+    var markMoved = function(j0, ke, stay){
+      var k, list = [];
+      for(k = j0 + 2; k <= ke; k += 2){
+        if(stay[norm(items[k].src)]) continue;
+        list.push(k); mv[k] = 1; skip[k + 1] = 1;
+      }
+      if(list.length) after[ke + 2] = list;
+      return list.map(function(x){ return "«" + items[x].src + "»"; }).join(", ");
+    };
     for(j = 0; j < items.length; j++){
       var r = rel(j);
       if(r === "subj" && !items[j].unk && norm(items[j].src) === "це"){
-        // «це» takes 'a before a noun or an adjective, also when «є» stands between them («це є красиве щось»); no agreement is checked
-        var tg = j + 2, be = gap(j, j + 2) && items[j + 2].w && norm(items[j + 2].src) === "є" && gap(j + 2, j + 4);
-        if(be) tg = j + 4;
-        var rt = rel(tg);
-        if((be || gap(j, tg)) && (rt === "adj" || rt === "noun" || rt === "pron")){
+        // «це» takes 'a before a noun or an adjective, also when «є» or «не» stand between them («це є красиве щось», «це не красиве»); no agreement is checked
+        var ke = skipW(j, SKIP_THIS), tg = ke + 2, rt = rel(tg);
+        if(gap(ke, tg) && (rt === "adj" || rt === "noun" || rt === "pron")){
           apos[j] = 1;
-          if(items[j].info) items[j].info.hy = "Додано 'a: після «це» " + (be ? "(через «є») " : "") + "стоїть " + (rt === "adj" ? "прикметник" : "іменник чи займенник") + " «" + items[tg].src + "».";
+          var mvT = markMoved(j, ke, SKIP_THIS);
+          if(items[j].info) items[j].info.hy = "Додано 'a: після «це» " + (ke > j ? "(через «є» чи «не») " : "") + "стоїть " + (rt === "adj" ? "прикметник" : "іменник чи займенник") + " «" + items[tg].src + "»." + (mvT ? " Слова " + mvT + " перенесено після нього." : "");
         }
         continue;
       }
-      if((r === "noun" || r === "pron" || r === "subj") && !items[j].unk && gap(j, j + 2) && rel(j + 2) === "adj" && !colon[j + 2] && hyAgree(items[j + 2], items[j])){
+      var kn2 = (r === "noun" || r === "pron" || r === "subj") && !items[j].unk ? skipW(j, SKIP_N) : j;
+      if((r === "noun" || r === "pron" || r === "subj") && !items[j].unk && gap(kn2, kn2 + 2) && rel(kn2 + 2) === "adj" && !colon[kn2 + 2] && hyAgree(items[kn2 + 2], items[j])){
         apos[j] = 1;
-        if(items[j].info) items[j].info.hy = "Додано 'a: одразу після слова стоїть прикметник «" + items[j + 2].src + "».";
+        var mvN = markMoved(j, kn2, SKIP_N);
+        if(items[j].info) items[j].info.hy = "Додано 'a: після слова " + (kn2 > j ? "" : "одразу ") + "стоїть прикметник «" + items[kn2 + 2].src + "»." + (mvN ? " Слова " + mvN + " перенесено після нього." : "");
       }
     }
     // a word that can be an adjective is followed by a word, but there is no colon: say why in its pop-up
@@ -1974,27 +2067,61 @@ var FIREBASE_CONFIG = {
       if(why) A.info.hy = "Двокрапки немає: " + why;
     }
     var out = "";
+    var rw = function(it, i){
+      if(it.unk) return '<span class="unk" title="Немає в словнику">' + esc(it.src) + '</span>';
+      var t = apos[i] ? it.text.split(" / ").map(function(x){ return x + "'a"; }).join(" / ") : it.text;
+      return spanOf(it.info, it.src, t, it.cls);
+    };
     items.forEach(function(it, i){
       if(it.sep !== undefined){ if(!skip[i]) out += esc(it.sep); return; }
-      if(it.unk){ out += '<span class="unk" title="Немає в словнику">' + esc(it.src) + '</span>'; return; }
-      var t = apos[i] ? it.text.split(" / ").map(function(x){ return x + "'a"; }).join(" / ") : it.text;
-      out += spanOf(it.info, it.src, t, it.cls) + (colon[i] ? ":" : "");
+      if(mv[i]) return;
+      out += rw(it, i) + (colon[i] ? ":" : "");
+      if(after[i]) after[i].forEach(function(k){ out += " " + rw(items[k], k); });
     });
     return out;
+  }
+  // Sitono -> Ukrainian: «noun'a (не) adjective adverb» was written from «noun (не) adverb adjective»: the words after the adjective go back before it
+  var REV_STOP = {"і": 1, "й": 1, "та": 1, "а": 1, "але": 1, "або": 1, "чи": 1, "що": 1, "щоб": 1, "бо": 1, "якщо": 1, "коли": 1, "як": 1, "ніби": 1, "мов": 1};
+  function reorderRev(items){
+    var ws = function(k){ return !!items[k] && items[k].kind === "sep" && /^\s+$/.test(items[k].s); };
+    var isWord = function(k){ return !!items[k] && items[k].kind === "w" && !!items[k].c; };
+    var isNe = function(k){ return isWord(k) && items[k].c.some(function(x){ return norm(x.uk) === "не"; }); };
+    var movable = function(k){
+      return isWord(k) && !items[k].mk && items[k].c.every(function(x){
+        var q = norm(x.uk);
+        return ["verb", "noun", "adj", "pron", "num", "qw"].indexOf(x.k) < 0 && q !== "не" && !REV_STOP[q] && !PL[q] && !SG[q] && !QU[q] && !PERSON[q];
+      });
+    };
+    var a, cur, m, list, l, ins, k;
+    for(a = 0; a < items.length; a++){
+      if(!isWord(a) || !items[a].mk) continue;
+      cur = a + 2;
+      if(ws(a + 1) && isNe(cur) && ws(cur + 1)) cur += 2;
+      if(!(ws(cur - 1) && isWord(cur) && items[cur].c.every(function(x){ return x.k === "adj"; }))) continue;
+      list = []; m = cur + 2;
+      while(ws(m - 1) && movable(m)){ list.push(m); m += 2; }
+      if(!list.length) continue;
+      ins = [];
+      list.forEach(function(x){ ins.push(items[x], {kind: "sep", s: " "}); });
+      for(l = list.length - 1; l >= 0; l--) items.splice(list[l] - 1, 2);
+      Array.prototype.splice.apply(items, [cur, 0].concat(ins));
+    }
   }
   // Sitono -> Ukrainian: «tosi:wamu» is read as two words, the ending 'a is dropped (order stays the same)
   function splitHy(parts){
     var r = [];
+    r.mk = {};                                 // positions of the words that had the ending 'a
     parts.forEach(function(q, qi){
       if(q === ":" && isW(parts[qi - 1] || "") && isW(parts[qi + 1] || "")){ r.push(" "); return; }
       var m = isW(q) && !ridx[norm(q)] && /^(.+?)['’ʼ]a$/i.exec(q);
+      if(m) r.mk[r.length] = true;
       r.push(m ? m[1] : q);
     });
     return r;
   }
 
   function translateFwd(){
-    var text = $("source").value;
+    var text = addQuestionWord($("source").value);
     ensureNumFwd(text);
     var parts = text.match(TOK) || [];
     var items = [], i = 0, Wf = [], posOf = {}, sentN = 0, brk = false;
@@ -2096,10 +2223,15 @@ var FIREBASE_CONFIG = {
         }
         if(cnt !== n) continue;
         var sg = seg.join(" "), cl = ridx[norm(sg)];
-        if(cl){ items.push({kind: "w", s: sg, c: cl}); i = j; done = true; }
+        if(cl){
+          var hasMk = false, xm;
+          for(xm = i; xm < j; xm++) if(parts.mk && parts.mk[xm]) hasMk = true;
+          items.push({kind: "w", s: sg, c: cl, mk: hasMk}); i = j; done = true;
+        }
       }
       if(!done){ items.push({kind: "w", s: p, c: null}); i++; }
     }
+    reorderRev(items);
     var W = [], sentN = 0, brk = false;
     items.forEach(function(it){
       if(it.kind === "sep"){ if(/[.!?…;:]/.test(it.s)) sentN++; if(/\S/.test(it.s)) brk = true; return; }
@@ -2271,7 +2403,7 @@ var FIREBASE_CONFIG = {
   var editId = null;
   // the derived-words block: not for verbs, pronouns, adverbs; an adjective only has an adverb
   function setDerBox(kind){
-    $("derBox").hidden = kind === "verb" || kind === "pron" || kind === "adv" || kind === "num";
+    $("derBox").hidden = kind === "verb" || kind === "pron" || kind === "adv" || kind === "num" || kind === "qw";
     $("dadjWrap").hidden = kind === "adj";
   }
  
@@ -2350,9 +2482,9 @@ var FIREBASE_CONFIG = {
     var obl = kind === "noun" ? $("oblInput").value.trim() : "", plu = kind === "noun" ? $("pluInput").value.trim() : "";
     var cmpuk = (kind === "adj" || kind === "adv") ? $("cmpInput").value.trim() : "";
     var dadj = $("dadjInput").value.trim(), dadjc = $("dadjcInput").value.trim(), dadv = $("dadvInput").value.trim(), dadvc = $("dadvcInput").value.trim();
-    if(kind === "verb" || kind === "pron" || kind === "adv" || kind === "num"){ dadj = dadjc = dadv = dadvc = ""; }
+    if(kind === "verb" || kind === "pron" || kind === "adv" || kind === "num" || kind === "qw"){ dadj = dadjc = dadv = dadvc = ""; }
     if(kind === "adj"){ dadj = ""; dadjc = ""; }
-    var deg = (kind === "adj" || kind === "adv") ? $("degSel").value : "", ddeg = (kind === "verb" || kind === "pron" || kind === "adv" || kind === "num") ? "" : $("ddegSel").value;
+    var deg = (kind === "adj" || kind === "adv") ? $("degSel").value : "", ddeg = (kind === "verb" || kind === "pron" || kind === "adv" || kind === "num" || kind === "qw") ? "" : $("ddegSel").value;
     var num = "";
     if(kind === "num"){
       var nv = parseInt($("numInput").value, 10);
@@ -2550,7 +2682,7 @@ var FIREBASE_CONFIG = {
       var el = $("end_" + r.k);
       if(document.activeElement !== el) el.value = endings[r.k] || "";
     });
-    ["adjcmp", "adjsup", "advend", "adjnom", "futword", "condword", "numro", "numso", "numfan", "numthou", "nummil", "numbil"].forEach(function(k){
+    ["adjcmp", "adjsup", "advend", "adjnom", "futword", "condword", "numro", "numso", "numfan", "numthou", "nummil", "numbil", "qword"].forEach(function(k){
       var el = $("end_" + k);
       if(el && document.activeElement !== el) el.value = endings[k] || "";
     });
