@@ -2042,6 +2042,14 @@ var FIREBASE_CONFIG = {
         apos[j] = 1;
         var mvN = markMoved(j, kn2, SKIP_N);
         if(items[j].info) items[j].info.hy = "Додано 'a: після слова " + (kn2 > j ? "" : "одразу ") + "стоїть прикметник «" + items[kn2 + 2].src + "»." + (mvN ? " Слова " + mvN + " перенесено після нього." : "");
+      } else if((r === "pron" || r === "subj") && !items[j].unk){
+        // pronoun + noun has the same structure: «він'a лікар», «він'a не лікар»; no agreement is checked
+        var kp = skipW(j, SKIP_N);
+        if(gap(kp, kp + 2) && rel(kp + 2) === "noun"){
+          apos[j] = 1;
+          var mvP = markMoved(j, kp, SKIP_N);
+          if(items[j].info) items[j].info.hy = "Додано 'a: після займенника " + (kp > j ? "" : "одразу ") + "стоїть іменник «" + items[kp + 2].src + "»." + (mvP ? " Слова " + mvP + " перенесено після нього." : "");
+        }
       }
     }
     // a word that can be an adjective is followed by a word, but there is no colon: say why in its pop-up
@@ -2080,7 +2088,7 @@ var FIREBASE_CONFIG = {
     });
     return out;
   }
-  // Sitono -> Ukrainian: «noun'a (не) adjective adverb» was written from «noun (не) adverb adjective»: the words after the adjective go back before it
+  // Sitono -> Ukrainian: «noun'a (не) adjective adverb» (also «pronoun'a (не) noun adverb») was written from «noun (не) adverb adjective»: the words after the adjective go back before it
   var REV_STOP = {"і": 1, "й": 1, "та": 1, "а": 1, "але": 1, "або": 1, "чи": 1, "що": 1, "щоб": 1, "бо": 1, "якщо": 1, "коли": 1, "як": 1, "ніби": 1, "мов": 1};
   function reorderRev(items){
     var ws = function(k){ return !!items[k] && items[k].kind === "sep" && /^\s+$/.test(items[k].s); };
@@ -2097,7 +2105,10 @@ var FIREBASE_CONFIG = {
       if(!isWord(a) || !items[a].mk) continue;
       cur = a + 2;
       if(ws(a + 1) && isNe(cur) && ws(cur + 1)) cur += 2;
-      if(!(ws(cur - 1) && isWord(cur) && items[cur].c.every(function(x){ return x.k === "adj"; }))) continue;
+      var tgtAdj = ws(cur - 1) && isWord(cur) && items[cur].c.every(function(x){ return x.k === "adj"; });
+      var tgtNoun = ws(cur - 1) && isWord(cur) && items[cur].c.every(function(x){ return x.k === "noun"; }) &&
+                    items[a].c.some(function(x){ return x.k === "pron" || norm(x.uk) === "це" || !!PERSON[norm(x.uk)]; });   // pronoun + noun
+      if(!(tgtAdj || tgtNoun)) continue;
       list = []; m = cur + 2;
       while(ws(m - 1) && movable(m)){ list.push(m); m += 2; }
       if(!list.length) continue;
