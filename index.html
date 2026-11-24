@@ -2052,6 +2052,19 @@ var FIREBASE_CONFIG = {
         }
       }
     }
+    // «є» is not written as a separate word: it is attached to the word on its left as the ending 'a («життя є погане» -> «життя'a погане»);
+    // if «не» stands before «є» («життя не є погане»), the ending goes to the word before «не»
+    for(j = 0; j < items.length; j++){
+      var E = items[j], tj, ej;
+      if(!E || E.sep !== undefined || !E.w || E.unk || norm(E.src) !== "є" || mv[j]) continue;
+      if(!gap(j - 2, j)) continue;
+      tj = j - 2;
+      if(norm(items[tj].src) === "не" && gap(tj - 2, tj)) tj -= 2;
+      ej = items[tj];
+      if(!ej || !ej.w || ej.unk || mv[tj] || colon[tj] || norm(ej.src) === "є") continue;
+      apos[tj] = 1; mv[j] = 1; skip[j - 1] = 1;
+      if(ej.info) ej.info.hy = (ej.info.hy ? ej.info.hy + " " : "") + "Слово «є» після нього записується як закінчення 'a.";
+    }
     // a word that can be an adjective is followed by a word, but there is no colon: say why in its pop-up
     var NUMN = {s: "однина", p: "множина"};
     var descr = function(it){
